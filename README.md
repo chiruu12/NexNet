@@ -1,6 +1,5 @@
 ---
-
- Neural Network Framework
+### A neural network for MNIST data set using only numpy!!!
 
 ## Objective
 
@@ -41,21 +40,23 @@ The framework consists of the following key components:
 8. **SGD Optimizer Class**:
    - Implements the stochastic gradient descent optimizer.
    - Methods: `step`.
+     
 9. **OneHot Encoding Class (OneHot)**:
-    -Provides utilities for one-hot encoding and decoding.
-    -Methods: `convert_to_one_hot`,`one_hot_to_label`
-10 . **Model Class**:
-   - Wraps all components into a cohesive model.
-   - Methods: `add_layer`, `compile`, `train`, `predict`, `evaluate`, `save`, `load`.
-
+   - Provides utilities for one-hot encoding and decoding.
+   - Methods: `convert_to_one_hot`,`one_hot_to_label`
+     
+10. **Model Class**:
+    - Wraps all components into a cohesive model.
+    - Methods: `add_layer`, `compile`, `train`, `predict`, `evaluate`, `save`, `load`.
+   
 ## Installation
 
-To use the framework, you need to have Python installed with NumPy. You can install NumPy using pip:
+To use the framework, you need to have Python installed with NumPy,sklearn,pandas and sys. You can install NumPy using pip:
 
 ```bash
 pip install numpy sklearn pandas sys
 ```
-#OR
+# OR
 Install Required Packages:
 ```bash
 pip install -r requirements.txt
@@ -160,5 +161,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ---
 
-Feel free to adjust any paths, URLs, or specific instructions to fit your project structure and repository.# MNIST-neural-network
-A neural network for MNIST data set using only numpy!!!
+Feel free to adjust any paths, URLs, or specific instructions to fit your project structure and repository.
