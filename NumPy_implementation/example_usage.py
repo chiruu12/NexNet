@@ -4,11 +4,11 @@ from sklearn.model_selection import train_test_split
 import sys
 
 # Import custom classes and functions
-from losses import CrossEntropyLoss
-from Activation_classes import ReLU, Softmax
-from Linear import Linear
-from Model import Model
-from utils import one_hot, SGD
+from NumPy_implementation.losses import CrossEntropyLoss
+from NumPy_implementation.Activation_classes import ReLU, Softmax
+from NumPy_implementation.Linear import Linear
+from NumPy_implementation.Model import Model
+from NumPy_implementation.utils import one_hot, SGD
 
 # Add dataset path to system path (adjust to actual dataset path)
 sys.path.append('/kaggle/input/{your-dataset-name}')
@@ -66,3 +66,27 @@ ans = pd.DataFrame({
 
 # Save the results to a CSV file
 ans.to_csv('{your file path}', index=False)
+
+
+
+
+#saving and loading the model 
+path="{your_path}model.npz"
+model.save(path)
+
+
+#load model with same classes(atleast the linear classes at the same position and in same number )
+model1=Model()
+model1.add_layer(Linear(784, 128))
+model1.add_layer(ReLU())
+model1.add_layer(Linear(128, 10))
+model1.add_layer(Softmax())
+model1.load("/kaggle/working/model.npz")
+
+
+# add optimer and loss to the model and you are read to goo!!!
+loss = CrossEntropyLoss()
+optimizer = SGD(learning_rate=.01)
+model1.compile(loss, optimizer)
+test_loss, test_accuracy  = model1.evaluate(x_test, y_test_one_hot)
+print(f'Test Loss: {test_loss}, Test Accuracy: {test_accuracy}')
