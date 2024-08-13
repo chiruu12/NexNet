@@ -160,5 +160,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - Kaggle for providing the dataset and platform.
 
 ---
-
-Feel free to adjust any paths, URLs, or specific instructions to fit your project structure and repository.
