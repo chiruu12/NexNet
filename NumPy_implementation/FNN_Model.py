@@ -1,10 +1,9 @@
-class Model:
-    def __init__(self):
-        """
-        Initialize the Model class.
-        This class manages the layers, loss function, and optimizer for training and inference.
-        """
+import numpy as np
+class FNN_Model:
+    def __init__(self, loss, optimizer):
         self.layers = []
+        self.optimizer = optimizer
+        self.loss=loss
 
     def add_layer(self, layer):
         """
@@ -12,30 +11,19 @@ class Model:
 
         Args:
             layer (object): A layer object that has `forward` and `backward` methods. The layer should 
-                            also have attributes like `W` and `b` if it contains learnable parameters.
+            also have attributes like `W` and `b` if it contains learnable parameters.
         """
         self.layers.append(layer)
-
-    def compile(self, loss, optimizer):
-        """
-        Compile the model by specifying the loss function and optimizer.
-
-        Args:
-            loss (object): An instance of a loss class that has `forward` and `backward` methods.
-            optimizer (object): An instance of an optimizer class that has a `step` method.
-        """
-        self.loss = loss
-        self.optimizer = optimizer
 
     def forward(self, X):
         """
         Perform a forward pass through the model.
 
         Args:
-            X (np.ndarray): Input data of shape (batch_size, ...).
+            X : Input data of size batch_size.
 
         Returns:
-            np.ndarray: The output of the model after passing through all layers.
+            The output of the model after passing through all layers.
         """
         for layer in self.layers:
             X = layer.forward(X)
@@ -44,12 +32,10 @@ class Model:
     def backward(self, dA):
         """
         Perform a backward pass through the model to compute gradients.
+        The method updates the gradients of the layers in place.
 
         Args:
-            dA (np.ndarray): Gradient of the loss with respect to the model's output.
-
-        Returns:
-            None: The method updates the gradients of the layers in place.
+            dA : Gradient of the loss with respect to the model's output.
         """
         for layer in reversed(self.layers):
             dA = layer.backward(dA)
@@ -59,10 +45,10 @@ class Model:
         Train the model using mini-batch gradient descent.
 
         Args:
-            X (np.ndarray): Training data of shape (num_samples, ...).
-            y (np.ndarray): True labels, one-hot encoded, of shape (num_samples, num_classes).
-            epochs (int): Number of training epochs.
-            batch_size (int): Size of each mini-batch.
+            X : Training data of shape (num_samples, ...).
+            y : True labels, one-hot encoded, of shape (num_samples, num_classes).
+            epochs : Number of training epochs.
+            batch_size : Size of each mini-batch.
         """
         num_samples = X.shape[0]
         for epoch in range(epochs):
@@ -90,10 +76,10 @@ class Model:
         Make predictions using the trained model.
 
         Args:
-            X (np.ndarray): Input data of shape (num_samples, ...).
+            X : Input data of shape (num_samples, ...).
 
         Returns:
-            np.ndarray: Predicted probabilities of shape (num_samples, num_classes).
+            Predicted probabilities of shape (num_samples, num_classes).
         """
         return self.forward(X)
 
@@ -102,14 +88,14 @@ class Model:
         Evaluate the model on a test set.
 
         Args:
-            X (np.ndarray): Test data of shape (num_samples, ...).
-            y (np.ndarray): True labels, one-hot encoded, of shape (num_samples, num_classes).
+            X : Test data of size of number of samples
+            y : True labels, one-hot encoded, of shape (num_samples, num_classes).
 
         Returns:
             tuple: A tuple containing:
-                - np.ndarray: Predicted probabilities of shape (num_samples, num_classes).
-                - float: Loss value on the test set.
-                - float: Accuracy percentage on the test set.
+                Predicted probabilities of shape (num_samples, num_classes).
+                Loss value on the test set.
+                Accuracy percentage on the test set.
         """
         y_pred = self.predict(X)
         loss = self.loss.forward(y, y_pred)

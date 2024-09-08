@@ -1,28 +1,32 @@
 import numpy as np
-
+from utils import Initializer
 class Linear:
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim, output_dim,initializer=None):
         """
         Initialize the Linear layer with random weights and zero biases.
 
         Parameters:
-        input_dim (int): Dimension of the input data.
-        output_dim (int): Dimension of the output data.
+        input_dim : Dimension of the input data.
+        output_dim : Dimension of the output data.
         """
-        self.W = np.random.randn(input_dim, output_dim) * 0.01
+        self.initializer=Initializer(initializer)
+        self.W = self.initializer.initialize_weights(input_dim, output_dim)
         self.b = np.zeros((1, output_dim))
+        
+        self.dW = None
+        self.db = None
 
     def forward(self, X):
         """
         Perform the forward pass of the Linear layer.
 
         Parameters:
-        X (numpy.ndarray): Input data.
+        X : Input data.
 
         Returns:
-        numpy.ndarray: Output of the forward pass.
+        Output of the forward pass.
         """
-        self.X = X
+        self.input = X
         return np.dot(X, self.W) + self.b
 
     def backward(self, dA):
@@ -30,12 +34,12 @@ class Linear:
         Perform the backward pass of the Linear layer.
 
         Parameters:
-        dA (numpy.ndarray): Gradient of the loss with respect to the output.
+        dA : the loss with respect to the output.
 
         Returns:
-        numpy.ndarray: Gradient of the loss with respect to the input.
+        Gradient of the loss with respect to the input.
         """
-        m = self.X.shape[0]
-        self.dW = np.dot(self.X.T, dA) / m
-        self.db = np.sum(dA, axis=0, keepdims=True) / m
+        m = self.input.shape[0]
+        self.dW = np.dot(self.input.T, dA) /m
+        self.db = np.sum(dA, axis=0, keepdims=True) /m
         return np.dot(dA, self.W.T)
