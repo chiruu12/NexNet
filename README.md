@@ -5,7 +5,6 @@
 
 In this we created a neural network framework from scratch using NumPy. The goal was to implement a framework that includes core components of a neural network such as layers, activation functions, loss functions, and an optimizer. Finally, we trained the neural network on the MNIST dataset and achieved at least 84% accuracy on the test dataset from Kaggle and the highest achieved being 93%.
 
-Caution: Most of the comments in this code are AI-generated.I have reviewed the entire code,but if you find any typos or mistakes, please contact me.
 ## Components Implemented
 
 The framework consists of the following key components:
