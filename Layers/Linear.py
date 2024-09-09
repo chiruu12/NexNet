@@ -39,7 +39,6 @@ class Linear:
         Returns:
         Gradient of the loss with respect to the input.
         """
-        m = self.input.shape[0]
-        self.dW = np.dot(self.input.T, dA) /m
-        self.db = np.sum(dA, axis=0, keepdims=True) /m
+        self.dW = np.dot(self.input.T, dA)
+        self.db = np.sum(dA, axis=0, keepdims=True)
         return np.dot(dA, self.W.T)
