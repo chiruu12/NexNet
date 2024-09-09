@@ -9,7 +9,7 @@ class Linear:
         input_dim : Dimension of the input data.
         output_dim : Dimension of the output data.
         """
-        self.initializer=Initializer(initializer)
+        self.initializer=Initializer(initializer) if initializer!=None else Initializer()
         self.W = self.initializer.initialize_weights(input_dim, output_dim)
         self.b = np.zeros((1, output_dim))
         

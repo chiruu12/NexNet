@@ -31,9 +31,10 @@ class Adam:
             `dW` (gradient of weights), and `db` (gradient of biases).
         """
         self.t += 1  # Increment time step
-        
-        for i, layer in enumerate(layers):
+        i=0
+        for  layer in layers:
             if hasattr(layer, 'W'):
+                i+=1
                 # Initialize moment vectors if they don't exist
                 if i >= len(self.m_W):
                     self.m_W.append(np.zeros_like(layer.W))

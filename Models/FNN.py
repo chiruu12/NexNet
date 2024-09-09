@@ -55,7 +55,6 @@ class FNN:
             for i in range(0, num_samples, batch_size):
                 X_batch = X[i:i+batch_size]
                 y_batch = y[i:i+batch_size]
-
                 # Forward pass
                 y_pred = self.forward(X_batch)
 
