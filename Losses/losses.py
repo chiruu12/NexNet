@@ -49,7 +49,7 @@ class CrossEntropyLoss:
 class BinaryCrossEntropyLoss:
     def __init__(self,epsilon=1e-5):
         """
-        Initalizing the class 
+        Initializing the class 
         
         Args:
             epsilon : used to avoid edge cases
@@ -86,15 +86,7 @@ class BinaryCrossEntropyLoss:
         diff_predictions = (self.predictions - self.targets)/(self.predictions*(1 - self.predictions)*batch_size)
         return diff_predictions
 
-    def backward(self):
-        """
-        Perform the backward pass of the MAE Loss function.
-
-        Returns:
-            Gradient of the loss with respect to the predictions
-        """
-        #calculating gradients loss 
-        return 1/self.targets.size if self.predictions > self.targets else -1/self.targets.size
+    
 
 class CosineSimilarityLoss:
     def __init__(self, epsilon=1e-8):
@@ -125,7 +117,7 @@ class CosineSimilarityLoss:
         self.norm_pred = np.linalg.norm(self.predictions, axis=1)
         self.norm_tar = np.linalg.norm(self.targets, axis=1)
 
-        # Compute cosine similarity and then the loss which is = 1 - similairty
+        # Compute cosine similarity and then the loss which is = 1 - similarity
         self.simi= self.dot/(self.norm_pred * self.norm_tar + self.epsilon)
         self.loss = 1 - np.mean(self.simi)
         return self.loss
@@ -140,7 +132,7 @@ class CosineSimilarityLoss:
         batch_size = self.predictions.shape[0]
         # calculate gradient
         grad_pred = (self.targets / (self.norm_tar + self.epsilon) - 
-                            (self.dot/ (self.norm_tar**2 + self.epsilon))*(self.predictions /(self.norm_pred + self.epsilon)))/batch_size
+        (self.dot/ (self.norm_tar**2 + self.epsilon))*(self.predictions /(self.norm_pred + self.epsilon)))/batch_size
 
         return grad_pred
 
@@ -218,9 +210,9 @@ class HuberLoss:
             Gradient of the loss with respect to the predictions
         """
         # Gradient for Huber loss
-        return   self.error/self.targets.size if np.abs(self.error) <= self.delta else self.delta * np.sign(self.error)/self.targets.size
+        return self.error/self.targets.size if np.abs(self.error) <= self.delta else self.delta * np.sign(self.error)/self.targets.size
 
-class MeanSquaredErrorLoss:
+class MSE:
     def forward(self, predictions, targets):
         """
         Perform the forward pass of the Mean Squared error Loss function.
@@ -251,7 +243,7 @@ class MeanSquaredErrorLoss:
         return grad_input
     
     
-class MeanAbsoluteErrorLoss:
+class MAE:
     def forward(self, predictions,targets):
         """
         Perform the forward pass of the Mean Absolute Error (MAE) Loss function.

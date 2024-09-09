@@ -1,5 +1,5 @@
 import numpy as np
-class FNN_Model:
+class FNN:
     def __init__(self, loss, optimizer):
         self.layers = []
         self.optimizer = optimizer
