@@ -1,7 +1,7 @@
 import numpy as np
 
 class AdaDelta:
-    def __init__(self, Beta, epsilon=1e-7):
+    def __init__(self, Beta=0.945, epsilon=1e-7):
         """
         Initialize the AdaDelta optimizer.
 
@@ -24,26 +24,28 @@ class AdaDelta:
             layers: List of layers in the network. Each layer should have attributes `W` (weights), `b` (biases),
             `dW` (gradient of weights), and `db` (gradient of biases).
         """
-        for i, layer in enumerate(layers):
+        i=0
+        for layer in layers:
             if hasattr(layer, 'W'):
+                i+=1
                 # Initialize running averages if they don't exist
-                if i >= len(self.v_W):
+                if i > len(self.v_W):
                     self.v_W.append(np.zeros_like(layer.W))  # Gradient squared averages for weights
                     self.v_b.append(np.zeros_like(layer.b))  # Gradient squared averages for biases
                     self.u_W.append(np.zeros_like(layer.W))  # Update squared averages for weights
                     self.u_b.append(np.zeros_like(layer.b))  # Update squared averages for biases
                     
                 # Update running averages of squared gradients
-                self.v_W[i] = self.Beta * self.v_W[i] + (1 - self.Beta) * layer.dW ** 2
-                self.v_b[i] = self.Beta * self.v_b[i] + (1 - self.Beta) * layer.db ** 2
+                self.v_W[i-1] = self.Beta * self.v_W[i-1] + (1 - self.Beta) * layer.dW ** 2
+                self.v_b[i-1] = self.Beta * self.v_b[i-1] + (1 - self.Beta) * layer.db ** 2
 
                 # Compute parameter updates
-                delta_w = layer.dW * np.sqrt(self.u_W[i] + self.epsilon) / np.sqrt(self.v_W[i] + self.epsilon)
-                delta_b = layer.db * np.sqrt(self.u_b[i] + self.epsilon) / np.sqrt(self.v_b[i] + self.epsilon)
+                delta_w = layer.dW * np.sqrt(self.u_W[i-1] + self.epsilon) / np.sqrt(self.v_W[i-1] + self.epsilon)
+                delta_b = layer.db * np.sqrt(self.u_b[i-1] + self.epsilon) / np.sqrt(self.v_b[i-1] + self.epsilon)
                 
                 # Update running averages of squared updates
-                self.u_W[i] = self.Beta * self.u_W[i] + (1 - self.Beta) * delta_w ** 2
-                self.u_b[i] = self.Beta * self.u_b[i] + (1 - self.Beta) * delta_b ** 2
+                self.u_W[i-1] = self.Beta * self.u_W[i-1] + (1 - self.Beta) * delta_w ** 2
+                self.u_b[i-1] = self.Beta * self.u_b[i-1] + (1 - self.Beta) * delta_b ** 2
                 
                 # Update weights and biases
                 layer.W -= delta_w

@@ -1,5 +1,5 @@
 import numpy as np
-    
+# caution dont use any of the functions from this file as they havent been updated only for educational purpose for now
 class SGD:
     def __init__(self, learning_rate=0.01):
         """

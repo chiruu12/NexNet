@@ -21,18 +21,20 @@ class Momentum:
             layers  : List of layers in the network. Each layer should have attributes or if they dont we wont calculate for 
             `W` (weights), `b` (biases),  `dW` (gradient of weights), and `db` (gradient of biases).
         """
-        for i, layer in enumerate(layers):
+        i=0
+        for layer in layers:
             if hasattr(layer, 'W'):
+                i+=1
                 # Initialize velocity if it doesn't exist
                 #basically the first iteration 
-                if i <= len(self.v_W):
+                if i > len(self.v_W):
                     self.v_W.append(np.zeros_like(layer.W))
                     self.v_b.append(np.zeros_like(layer.b))
 
                 # Update velocity for weights and biases
-                self.v_W[i] = self.momentum *self.v_W[i] - self.learning_rate *layer.dW
-                self.v_b[i] = self.momentum *self.v_b[i] - self.learning_rate *layer.db
+                self.v_W[i-1] = self.momentum *self.v_W[i-1] - self.learning_rate *layer.dW
+                self.v_b[i-1] = self.momentum *self.v_b[i-1] - self.learning_rate *layer.db
 
                 # Update weights and biases using the velocity
-                layer.W += self.v_W[i]
-                layer.b += self.v_b[i]
+                layer.W += self.v_W[i-1]
+                layer.b += self.v_b[i-1]
