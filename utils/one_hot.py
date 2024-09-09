@@ -4,7 +4,7 @@ class one_hot:
         
         self.num_classes=num_classes
         
-    def one_hot_to_label(self,one_hot_matrix):
+    def one_hot_to_label(one_hot_matrix):
         """
         Convert a one-hot encoded matrix to class labels.
 
