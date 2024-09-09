@@ -1,20 +1,6 @@
 import numpy as np
-class Optimizer:
-    def __init__(self, learning_rate=0.01, **kwargs):
-        self.learning_rate = learning_rate
-
-    def step(self, layers):
-        """
-        Perform a single optimization step. This method needs to be overridden
-        by specific optimizer classes.
-        
-        Args:
-            layers: List of layers in the network. Each layer should have attributes
-                    `W` (weights), `b` (biases), `dW` (gradient of weights), and `db` (gradient of biases).
-        """
-        raise NotImplementedError("This method should be overridden by subclasses")
     
-class SGD(Optimizer):
+class SGD:
     def __init__(self, learning_rate=0.01):
         """
         Initialize the Stochastic Gradient Descent (SGD) optimizer.
@@ -41,7 +27,7 @@ class SGD(Optimizer):
                 layer.b -= self.learning_rate * layer.db
                 
                 
-class Momentum(Optimizer):
+class Momentum:
     def __init__(self, learning_rate=0.01, momentum=0.9):
         """
         Initialize the Momentum optimizer.
@@ -78,7 +64,7 @@ class Momentum(Optimizer):
                 # Update weights and biases using the velocity
                 layer.W += self.v_W[i]
                 layer.b += self.v_b[i]
-class AdaGrad(Optimizer):
+class AdaGrad:
     def __init__(self, learning_rate, epsilon=1e-8):
         """
         Initialize the AdaGrad optimizer.
@@ -116,7 +102,7 @@ class AdaGrad(Optimizer):
                 layer.b -= self.learning_rate * layer.db / np.sqrt(self.v_b[i] + self.epsilon)
 
 
-class RMSProp(Optimizer):
+class RMSProp:
     def __init__(self, learning_rate=0.01, Beta=0.9, epsilon=1e-7):
         """
         Initialize the RMSProp optimizer.
@@ -155,7 +141,7 @@ class RMSProp(Optimizer):
                 layer.W -= self.learning_rate * layer.dW / np.sqrt(self.v_W[i] + self.epsilon)
                 layer.b -= self.learning_rate * layer.db / np.sqrt(self.v_b[i] + self.epsilon)
 
-class AdaDelta(Optimizer):
+class AdaDelta:
     def __init__(self, Beta, epsilon=1e-7):
         """
         Initialize the AdaDelta optimizer.
@@ -203,7 +189,7 @@ class AdaDelta(Optimizer):
                 # Update weights and biases
                 layer.W -= delta_w
                 layer.b -= delta_b
-class Adam(Optimizer):
+class Adam:
     def __init__(self, learning_rate=0.01, beta1=0.9, beta2=0.999, epsilon=1e-7):
         """
         Initialize the Adam optimizer.
@@ -260,7 +246,7 @@ class Adam(Optimizer):
                 layer.W -= self.learning_rate * m_W_hat / (np.sqrt(v_W_hat) + self.epsilon)
                 layer.b -= self.learning_rate * m_b_hat / (np.sqrt(v_b_hat) + self.epsilon)
                 
-class NAdam(Optimizer):
+class NAdam:
     # it is basically Adam but with nesterovs 
     def __init__(self, learning_rate=0.01, beta1=0.9, beta2=0.999, epsilon=1e-7):
         """
