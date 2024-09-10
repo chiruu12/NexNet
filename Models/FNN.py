@@ -52,9 +52,12 @@ class FNN:
         """
         num_samples = X.shape[0]
         for epoch in range(epochs):
+            epoch_loss=0
             for i in range(0, num_samples, batch_size):
-                X_batch = X[i:i+batch_size]
-                y_batch = y[i:i+batch_size]
+                # here we have included this if else because sometimes we make take X and batchsize such that the 
+                # num_samples%batch_size!=0 hence we need this statement 
+                X_batch = X[i:i+batch_size] if i+batch_size <= num_samples else X[i:num_samples]
+                y_batch = y[i:i+batch_size] if i+batch_size <= num_samples else y[i:num_samples]
                 # Forward pass
                 y_pred = self.forward(X_batch)
 
@@ -67,8 +70,13 @@ class FNN:
 
                 # Update weights and biases
                 self.optimizer.step(self.layers)
-
-            print(f'Epoch {epoch+1}/{epochs}, Loss: {loss:.4f}')
+                # calculating the loss 
+                epoch_loss+=loss
+                
+            num_batches =  (num_samples // batch_size + int(num_samples % batch_size != 0))
+            # The average loss over the total number of batches
+            average_epoch_loss = epoch_loss / num_batches
+            print(f'Epoch {epoch+1}/{epochs}, ---- Total Loss: {epoch_loss:.4f}, ---- Average Loss: {average_epoch_loss:.4f}')
 
     def predict(self, X):
         """
