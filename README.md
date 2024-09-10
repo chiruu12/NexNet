@@ -1,4 +1,4 @@
-# NexNet
+# NexNet ⚙️
 
 NexNet is a neural network framework implemented from scratch using NumPy. It provides functionalities similar to PyTorch and TensorFlow, including various activation functions, loss functions, optimizers, and more. This README will guide you through the setup, usage, and features of the framework.
 
