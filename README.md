@@ -1,162 +1,211 @@
----
-### A neural network for MNIST data set using only numpy!!!
+# NexNet
 
-## Objective
+NexNet is a neural network framework implemented from scratch using NumPy. It provides functionalities similar to PyTorch and TensorFlow, including various activation functions, loss functions, optimizers, and more. This README will guide you through the setup, usage, and features of the framework.
 
-In this we created a neural network framework from scratch using NumPy. The goal was to implement a framework that includes core components of a neural network such as layers, activation functions, loss functions, and an optimizer. Finally, we trained the neural network on the MNIST dataset and achieved at least 84% accuracy on the test dataset from Kaggle and the highest achieved being 93%.
+## Features
 
-## Components Implemented
+- **Activation Functions:**
+  - `ReLU`: Rectified Linear Unit, introduces non-linearity by zeroing out negative values.
+  - `Softmax`: Converts logits to probabilities, commonly used in the output layer for classification tasks.
+  - `PReLU`: Parametric ReLU, allows for a learnable slope for negative values.
+  - `Sigmoid`: Maps values to a range between 0 and 1, often used in binary classification.
+  - `Tanh`: Maps values to a range between -1 and 1, helping with centering data.
+  - `LeakyReLU`: Similar to ReLU but allows a small gradient when inputs are negative.
+  - `ELU`: Exponential Linear Unit, helps speed up learning by smoothing the activation function.
+  - `Swish`: Smooth, non-monotonic activation function that can improve model performance.
+  - `Softplus`: A smooth approximation to ReLU, improving gradient flow.
 
-The framework consists of the following key components:
+- **Loss Functions:**
+  - `CrossEntropyLoss`: Measures the performance of a classification model whose output is a probability value between 0 and 1.
+  - `MeanSquaredErrorLoss`: Calculates the average of the squares of the errors between predicted and actual values.
+  - `BinaryCrossEntropyLoss`: Measures the performance of a binary classification model.
+  - `HuberLoss`: Combines the advantages of Mean Squared Error and Mean Absolute Error.
+  - `PoissonLoss`: Used for count-based prediction tasks, measures the difference between predicted and actual counts.
+  - `MeanAbsoluteErrorLoss`: Calculates the average of the absolute errors between predicted and actual values.
+  - `CosineSimilarityLoss`: Measures the cosine of the angle between two vectors to determine their similarity.
 
-1. **Linear Layer Class**:
-   - Implements a fully connected layer.
-   - Methods: `forward`, `backward`.
+- **Optimizers:**
+  - `SGD`: Stochastic Gradient Descent, updates weights based on a subset of the data.
+  - `Momentum`: Enhances SGD by considering past gradients to accelerate convergence.
+  - `AdaGrad`: Adapts learning rates based on the frequency of updates for each parameter.
+  - `Adam`: Combines the benefits of AdaGrad and RMSProp, including adaptive learning rates.
+  - `NAdam`: Adam with Nesterov accelerated gradient, improving convergence speed.
+  - `RMSProp`: Adapts learning rates based on recent gradients to maintain a moving average of the squared gradients.
+  - `AdaDelta`: An extension of AdaGrad that reduces its aggressive, monotonically decreasing learning rate.
 
-2. **ReLU Activation Class**:
-   - Implements the ReLU activation function.
-   - Methods: `forward`, `backward`.
+- **Initializers:**
+  - `Xavier`: Initializes weights to maintain the variance of activations, useful for sigmoid and tanh activations.
+  - `He`: Initializes weights to avoid issues with dying neurons in ReLU-based networks.
+  - `Random`: Simple random initialization for small networks.
+  - `Zero`: Initializes weights to zero (not typically recommended for deep networks).
 
-3. **Sigmoid Activation Class**:
-   - Implements the Sigmoid activation function.
-   - Methods: `forward`, `backward`.
+- **Layers:**
+  - `Linear`: Fully connected layer that performs a linear transformation.
 
-4. **Tanh Activation Class**:
-   - Implements the Tanh activation function.
-   - Methods: `forward`, `backward`.
-
-5. **Softmax Activation Class**:
-   - Implements the Softmax activation function.
-   - Methods: `forward`, `backward`.
-
-6. **Cross-Entropy Loss Class**:
-   - Implements the cross-entropy loss function.
-   - Methods: `forward`, `backward`.
-
-7. **Mean Squared Error (MSE) Loss Class**:
-   - Implements the MSE loss function.
-   - Methods: `forward`, `backward`.
-
-8. **SGD Optimizer Class**:
-   - Implements the stochastic gradient descent optimizer.
-   - Methods: `step`.
-     
-9. **OneHot Encoding Class (OneHot)**:
-   - Provides utilities for one-hot encoding and decoding.
-   - Methods: `convert_to_one_hot`,`one_hot_to_label`
-     
-10. **Model Class**:
-    - Wraps all components into a cohesive model.
-    - Methods: `add_layer`, `compile`, `train`, `predict`, `evaluate`, `save`, `load`.
-   
 ## Installation
 
-To use the framework, you need to have Python installed with NumPy,sklearn,pandas and sys. You can install NumPy using pip:
+To use NexNet, clone the repository and change into the directory:
 
 ```bash
-pip install numpy sklearn pandas sys
+git clone https://github.com/chiruu12/NexNet.git
+import os
+os.chdir('NexNet')
 ```
-# OR
-Install Required Packages:
-```bash
-pip install -r requirements.txt
-```
-## Usage Instructions
 
-### 1. Import the Framework
+## Usage
 
-To use the framework, import the necessary classes into your Kaggle notebook or Python script:
+### Importing Modules
+
+To get started with NexNet, you need to import the necessary modules:
 
 ```python
-from Linear import Linear
-from Activation_classes import ReLU, Softmax
-from losses import CrossEntropyLoss, MeanSquaredErrorLoss
-from utils import SGD,one_hot
-from Model import Model
+from Models import FNN, CNN
+from Losses import CrossEntropyLoss, MeanSquaredErrorLoss, BinaryCrossEntropyLoss, HuberLoss, PoissonLoss, MeanAbsoluteErrorLoss, CosineSimilarityLoss
+from Layers import Linear
+from Activation_classes import ReLu, Softmax, PReLU, Sigmoid, Tanh, LeakyReLU, ELU, Swish, Softplus
+from utils import one_hot, Initializer
+from Optimizer import SGD, Momentum, AdaGrad, Adam, NAdam, RMSProp, AdaDelta
 ```
 
-### 2. Create and Train a Model
+## Data Preparation
 
-Here's an example of how to create and train a model using the framework:
+Prepare your dataset by splitting it into training and testing sets and one-hot encoding the labels:
 
 ```python
-import pandas as pd
-import numpy as np
 from sklearn.model_selection import train_test_split
 
-# Load dataset
-train = pd.read_csv('/path/to/train.csv')
-test = pd.read_csv('/path/to/test.csv')
-submission = pd.read_csv('/path/to/sample_submission.csv')
+# Example data split
+X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, test_size=0.20, random_state=42)
 
-# Prepare data
-X = train.drop(columns=['label']).to_numpy()
-y = train['label'].to_numpy()
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-
-# Convert labels to one-hot encoding
-one_hot_encoder = one_hot(num_classes=10)
+# One-hot encode the labels
+num_classes = 10  # For MNIST
+one_hot_encoder = one_hot(num_classes)
 y_train_one_hot = one_hot_encoder.convert_to_one_hot(y_train)
 y_test_one_hot = one_hot_encoder.convert_to_one_hot(y_test)
-
-# Initialize model
-model = Model()
-model.add_layer(Linear(input_dim=784, output_dim=128))
-model.add_layer(ReLU())
-model.add_layer(Linear(input_dim=128, output_dim=10))
-model.add_layer(Softmax())
-
-# Define loss function and optimizer
-loss_function = CrossEntropyLoss()
-optimizer = SGD(learning_rate=0.01)
-model.compile(loss=loss_function, optimizer=optimizer)
-
-# Train the model
-model.train(X_train, y_train_one_hot, epochs=20, batch_size=64)
-
-# Evaluate the model
-predictions, test_loss, test_accuracy = model.evaluate(X_test, y_test_one_hot)
-print(f'Test Loss: {test_loss}, Test Accuracy: {test_accuracy}')
-
-# Predict on test data
-test_array = model.predict(test.to_numpy())
-y_predictions = one_hot_encoder.one_hot_to_label(test_array)
-
-# Prepare and save submission
-ans = pd.DataFrame({
-    'ImageId': submission["ImageId"].to_numpy(),
-    'Label': y_predictions
-})
-ans.to_csv('/path/to/submission.csv', index=False)
 ```
 
-### 3. Save and Load Models
+## Creating and Training a Model
 
-To save and load models:
+Create and train a model using the `FNN` class:
 
 ```python
-# Save model
-model.save('/path')
+# Create the model
+input_dim = X_train.shape[1]
+model = FNN(optimizer=AdaDelta(), loss=CrossEntropyLoss())
 
-# Load model
-loaded_model = Model.load('/path')
+# Add layers to the model
+model.add_layer(Linear(input_dim=input_dim, output_dim=128, activation=PReLU()))
+model.add_layer(Linear(input_dim=128, output_dim=128, activation=PReLU()))
+model.add_layer(Linear(input_dim=128, output_dim=32, activation=PReLU()))
+model.add_layer(Linear(32, num_classes))
+
+# Train the model
+model.train(X_train, y_train_one_hot, epochs=30, batch_size=64)
+
+# Evaluate on test set
+accuracy = model.evaluate(X_test, y_test_one_hot)
 ```
 
-## Kaggle Notebook
 
-You can view and execute the Kaggle notebook that demonstrates the usage of this framework [here](https://www.kaggle.com/{your-kaggle-username}/{your-notebook-name}).
+## Model Saving and Loading
 
-## Contributing
+To save and load model weights, NexNet provides functionality to persist and restore model states. This is useful for checkpointing and resuming training or for deploying models.
 
-If you want to contribute to this project, please fork the repository and submit a pull request. 
+### Saving the Model
+
+After training your model, you can save its weights to a file using the `save` method. The weights are saved in a `.npz` file format.
+
+```python
+# Save the model weights to a file
+model.save('model_weights.npz')
+```
+
+
+This will create a file named model_weights.npz containing the weights and biases of all layers in the model.
+
+### Loading the Model
+To load a previously saved model, use the load method. This will restore the weights and biases from the file into your model.
+
+```python
+# Load the model weights from a file
+model.load('model_weights.npz')
+```
+Make sure the model architecture matches the one used when the weights were saved. The load method will update the weights and biases of the layers according to the saved state.
+
+
+## Future Enhancements
+
+NexNet is an evolving project with a focus on building a robust and flexible neural network library. Here are some planned enhancements and future improvements:
+
+1. **Expanded Layer Support**
+   - Additional Layers: Integrate more advanced types of layers such as dropout, batch normalization, and attention mechanisms.
+   - Custom Layer Support: Allow users to define and implement their own custom layers.
+
+2. **Optimizer Enhancements**
+   - Advanced Optimizers: Introduce more optimization algorithms such as RMSProp, AdamW, and L-BFGS.
+   - Hyperparameter Tuning: Implement automatic hyperparameter tuning capabilities for optimizers.
+
+3. **Enhanced Model Management**
+   - Checkpoint: Add functionality to save and restore model checkpoints during training.
+   - Model Serialization: Improve model saving and loading to support various formats and metadata.
+
+4. **Visualization and Monitoring**
+   - Training Progress: Incorporate tools for visualizing training progress, including loss and accuracy curves.
+   - Model Inspection: Develop utilities for inspecting and analyzing model parameters and performance.
+
+5. **Expanded Loss Functions**
+   - Additional Losses: Include more loss functions such as Hinge Loss, Triplet Loss, and custom user-defined losses.
+   - Advanced Metrics: Implement advanced evaluation metrics and performance measures.
+
+6. **Improved Documentation**
+   - Detailed Examples: Provide more comprehensive examples and tutorials for using different features and functionalities.
+   - API Documentation: Enhance the API documentation for easier navigation and understanding.
+
+7. **Performance Optimization**
+   - Efficiency Improvements: Optimize the performance of core components to handle larger datasets and more complex models.
+   - Parallel Computing: Explore options for parallel computing to accelerate training and inference.
+
+   ## Contributions
+
+Contributions to NexNet are welcome! If you have suggestions, improvements, or bug fixes, please follow these steps:
+
+1. **Fork the Repository**
+   - Create a fork of the repository on GitHub to make your changes.
+
+2. **Clone Your Fork**
+   - Clone your fork to your local machine using:
+     ```bash
+     git clone https://github.com/your-username/NexNet.git
+     ```
+
+3. **Create a Branch**
+   - Create a new branch for your changes:
+     ```bash
+     git checkout -b feature/your-feature-name
+     ```
+
+4. **Make Changes**
+   - Implement your changes or add new features.
+
+5. **Commit and Push**
+   - Commit your changes with a descriptive message:
+     ```bash
+     git add .
+     git commit -m "Add detailed description of changes"
+     ```
+   - Push your branch to your fork:
+     ```bash
+     git push origin feature/your-feature-name
+     ```
+
+6. **Create a Pull Request**
+   - Open a pull request on the original repository to propose your changes.
+
+7. **Review and Feedback**
+   - The project maintainers will review your pull request and provide feedback if necessary.
+
+Thank you for contributing to NexNet!
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- The MNIST dataset used for training and evaluation.
-- Kaggle for providing the dataset and platform.
-
----
+NexNet is licensed under the [MIT License](LICENSE). See the [LICENSE](LICENSE) file for more details.
