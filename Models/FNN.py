@@ -98,8 +98,6 @@ class FNN:
             X : Test data 
             y : True labels, one-hot encoded or maybe not? depends of the type of network
 
-        Returns:
-            Accuracy percentage on the test set.
         """
         # Make predictions using class method predict basically all the values are passed through the network once
         # and then results are stored.
@@ -112,9 +110,7 @@ class FNN:
         predictions = np.argmax(y_pred, axis=1)
         true_labels = np.argmax(y, axis=1)
         accuracy = np.mean(predictions == true_labels) * 100
-
         print(f'Evaluation Loss: {loss:.4f} ----Evaluation Accuracy: {accuracy:.2f}% ')
-        return accuracy
 
 
     def save(self, path):
