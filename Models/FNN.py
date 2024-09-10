@@ -113,7 +113,7 @@ class FNN:
         true_labels = np.argmax(y, axis=1)
         accuracy = np.mean(predictions == true_labels) * 100
 
-        print(f' Loss: {loss:.4f} ---- Accuracy: {accuracy:.2f}% ')
+        print(f'Evaluation Loss: {loss:.4f} ----Evaluation Accuracy: {accuracy:.2f}% ')
         return accuracy
 
 
