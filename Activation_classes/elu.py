@@ -7,7 +7,8 @@ class ELU:
         Args:
             alpha_init (float): Initial value for the alpha parameter.
         """
-        self.alpha=alpha
+        # Initialize alpha as a learnable parameter
+        self.alpha = np.full_like(0.01, alpha) # it is used like this because it will be used for CNN's as well
     def forward(self, inputs):
         """
         Compute the forward pass of the ELU activation function.

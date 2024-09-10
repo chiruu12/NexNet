@@ -8,7 +8,7 @@ class PReLU:
             alpha_init (float): Initial value for the alpha parameter.
         """
         # Initialize alpha as a learnable parameter
-        self.alpha = alpha
+        self.alpha = np.full_like(0.01, alpha) # it is used like this because it will be used for CNN's as well
         self.alpha_grad = 0  # To store the gradient of alpha
 
     def forward(self, inputs):
