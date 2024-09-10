@@ -92,22 +92,30 @@ class FNN:
 
     def evaluate(self, X, y):
         """
-        Evaluate the model on a test set.
+        Evaluate the model on a test set and print the loss and accuracy.
 
         Args:
-            X : Test data of size of number of samples
-            y : True labels, one-hot encoded, of shape (num_samples, num_classes).
+            X : Test data 
+            y : True labels, one-hot encoded or maybe not? depends of the type of network
 
         Returns:
-            tuple: A tuple containing:
-                Predicted probabilities of shape (num_samples, num_classes).
-                Loss value on the test set.
-                Accuracy percentage on the test set.
+            Accuracy percentage on the test set.
         """
+        # Make predictions using class method predict basically all the values are passed through the network once
+        # and then results are stored.
         y_pred = self.predict(X)
+        # Calculate the loss in the evaluating 
         loss = self.loss.forward(y, y_pred)
-        accuracy = np.mean(np.argmax(y_pred, axis=1) == np.argmax(y, axis=1)) * 100
-        return loss, accuracy
+
+        # Calculating accuracy accuracy using argmax because it is faster and makes the prob to labels which makes it 
+        # easy to compute using np.mean
+        predictions = np.argmax(y_pred, axis=1)
+        true_labels = np.argmax(y, axis=1)
+        accuracy = np.mean(predictions == true_labels) * 100
+
+        print(f' Loss: {loss:.4f} ---- Accuracy: {accuracy:.2f}% ')
+        return accuracy
+
 
     def save(self, path):
         """
