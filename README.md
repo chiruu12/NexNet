@@ -165,7 +165,11 @@ NexNet is an evolving project with a focus on building a robust and flexible neu
    - Efficiency Improvements: Optimize the performance of core components to handle larger datasets and more complex models.
    - Parallel Computing: Explore options for parallel computing to accelerate training and inference.
 
-   ## Contributions
+## NLP Implementations
+
+For all the NLP-related implementations, please refer to the detailed documentation at [Readme_NLP.md](https://github.com/chiruu12/NexNet/blob/main/NLP/Readme_NLP.md).
+
+## Contributions
 
 Contributions to NexNet are welcome! If you have suggestions, improvements, or bug fixes, please follow these steps:
 
