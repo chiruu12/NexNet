@@ -36,5 +36,7 @@ For the current Word2Vec-based recommendation system:
 2. Load the dataset and preprocess the text.
 3. Use the `RecommendationEngine` class to load a pre-trained Word2Vec model and generate recommendations.
 
+
+## All the related notebooks are in the NLP.Notebooks folder.
 Stay tuned for updates as more NLP techniques and models are  integrated!
 
