@@ -1,4 +1,7 @@
 import numpy as np
+
+
+
 class FNN:
     def __init__(self, loss, optimizer):
         self.layers = []
