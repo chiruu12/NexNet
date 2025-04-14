@@ -12,17 +12,16 @@ This repository contains implementations of various natural language processing 
    - Another variant of Word2Vec, where the model predicts a target word based on its context words, useful for generating word embeddings.
 4. **GloVe (Global Vectors for Word Representation)**:  
    - Another word embedding technique that can be used for semantic similarity and other NLP tasks.
-
+5. **NER (Named Entity Recognition)**:  
+   - A few implementations of NER one of which is by using a BERT model.
 ## Future Implementations
 
 The following NLP models and techniques are planned for future implementations:
 
 - **GPT (Generative Pre-trained Transformer)**:  
   A language model for text generation, fine-tuning on custom datasets, and conversational agents.
-
 - **BERT (Bidirectional Encoder Representations from Transformers)**:  
   For tasks such as sentiment analysis, text classification, and named entity recognition (NER).
-
 - **FastText**:  
   A word representation model that considers subword information to better handle out-of-vocabulary words.
 - **Transformers**:  
@@ -40,12 +39,6 @@ The following NLP models and techniques are planned for future implementations:
 - **Other NLP Models and Tasks**:  
   Further work on various NLP techniques, including but not limited to text classification, sentiment analysis, NER, and summarization.
 
-## How to Use
-
-For the current Word2Vec-based recommendation system:
-1. Ensure you have a dataset with text data.
-2. Load the dataset and preprocess the text.
-3. Use the `RecommendationEngine` class to load a pre-trained Word2Vec model and generate recommendations.
 
 
 ## All the related notebooks are in the NLP.Notebooks folder.
