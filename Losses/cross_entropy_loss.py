@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, exp, log, max, sum
 
 
 class CrossEntropyLoss:
@@ -31,13 +31,13 @@ class CrossEntropyLoss:
         Returns:
             The computed cross-entropy loss (scalar).
         """
-        p_max = np.max(predictions, axis=1, keepdims=True)
-        exps = np.exp(predictions - p_max)
-        self.softmax = exps / np.sum(exps, axis=1, keepdims=True)
+        p_max = max(predictions, axis=1, keepdims=True)
+        exps = exp(predictions - p_max)
+        self.softmax = exps / sum(exps, axis=1, keepdims=True)
         self.targets = targets
 
         batch_size = predictions.shape[0]
-        self.loss = -np.sum(targets * np.log(self.softmax + self.epsilon)) / batch_size
+        self.loss = -sum(targets * log(self.softmax + self.epsilon)) / batch_size
         return self.loss
 
     def backward(self):

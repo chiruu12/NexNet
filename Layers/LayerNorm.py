@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, mean, ones, prod, sqrt, sum, var, zeros, zeros_like
 
 
 class LayerNorm:
@@ -25,11 +25,11 @@ class LayerNorm:
         self.normalized_shape = normalized_shape
         self.epsilon = epsilon
         
-        self.gamma = np.ones(normalized_shape)
-        self.beta = np.zeros(normalized_shape)
+        self.gamma = ones(normalized_shape)
+        self.beta = zeros(normalized_shape)
         
-        self.dgamma = np.zeros_like(self.gamma)
-        self.dbeta = np.zeros_like(self.beta)
+        self.dgamma = zeros_like(self.gamma)
+        self.dbeta = zeros_like(self.beta)
         
     def forward(self, x):
         """
@@ -46,11 +46,11 @@ class LayerNorm:
         
         axes = tuple(range(-len(self.normalized_shape), 0))
         
-        self.mean = np.mean(x, axis=axes, keepdims=True)
-        self.var = np.var(x, axis=axes, keepdims=True)
+        self.mean = mean(x, axis=axes, keepdims=True)
+        self.var = var(x, axis=axes, keepdims=True)
         
         self.x_centered = x - self.mean
-        self.std = np.sqrt(self.var + self.epsilon)
+        self.std = sqrt(self.var + self.epsilon)
         self.x_norm = self.x_centered / self.std
         
         self.output = self.gamma * self.x_norm + self.beta
@@ -68,18 +68,18 @@ class LayerNorm:
             Gradient with respect to input.
         """
         axes = tuple(range(-len(self.normalized_shape), 0))
-        n = np.prod([self.input_shape[i] for i in range(-len(self.normalized_shape), 0)])
+        n = prod([self.input_shape[i] for i in range(-len(self.normalized_shape), 0)])
         
         sum_axes = tuple(range(len(self.input_shape) - len(self.normalized_shape)))
-        self.dgamma = np.sum(gradient_output * self.x_norm, axis=sum_axes)
-        self.dbeta = np.sum(gradient_output, axis=sum_axes)
+        self.dgamma = sum(gradient_output * self.x_norm, axis=sum_axes)
+        self.dbeta = sum(gradient_output, axis=sum_axes)
         
         dx_norm = gradient_output * self.gamma
         
-        dvar = np.sum(dx_norm * self.x_centered * -0.5 * (self.var + self.epsilon) ** (-1.5), axis=axes, keepdims=True)
+        dvar = sum(dx_norm * self.x_centered * -0.5 * (self.var + self.epsilon) ** (-1.5), axis=axes, keepdims=True)
         
-        dmean = np.sum(dx_norm * -1 / self.std, axis=axes, keepdims=True)
-        dmean += dvar * np.mean(-2 * self.x_centered, axis=axes, keepdims=True)
+        dmean = sum(dx_norm * -1 / self.std, axis=axes, keepdims=True)
+        dmean += dvar * mean(-2 * self.x_centered, axis=axes, keepdims=True)
         
         dx = dx_norm / self.std
         dx += dvar * 2 * self.x_centered / n

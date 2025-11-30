@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, abs, mean, sign
 
 
 class MAE:
@@ -27,7 +27,7 @@ class MAE:
         """
         self.predictions = predictions
         self.targets = targets
-        self.loss = np.mean(np.abs(predictions - targets))
+        self.loss = mean(abs(predictions - targets))
         return self.loss
 
     def backward(self):
@@ -38,5 +38,5 @@ class MAE:
             Gradient of the loss with respect to the predictions.
         """
         batch_size = self.targets.size
-        grad = np.sign(self.predictions - self.targets) / batch_size
+        grad = sign(self.predictions - self.targets) / batch_size
         return grad

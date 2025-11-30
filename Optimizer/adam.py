@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, sqrt, zeros_like
 
 
 class Adam:
@@ -43,11 +43,11 @@ class Adam:
         for layer in layers:
             if hasattr(layer, 'W') and hasattr(layer, 'dW') and layer.dW is not None:
                 if layer_idx >= len(self.m_W):
-                    self.m_W.append(np.zeros_like(layer.W))
-                    self.v_W.append(np.zeros_like(layer.W))
+                    self.m_W.append(zeros_like(layer.W))
+                    self.v_W.append(zeros_like(layer.W))
                     if hasattr(layer, 'b') and layer.b is not None:
-                        self.m_b.append(np.zeros_like(layer.b))
-                        self.v_b.append(np.zeros_like(layer.b))
+                        self.m_b.append(zeros_like(layer.b))
+                        self.v_b.append(zeros_like(layer.b))
                     else:
                         self.m_b.append(None)
                         self.v_b.append(None)
@@ -58,7 +58,7 @@ class Adam:
                 m_W_hat = self.m_W[layer_idx] / (1 - self.beta1 ** self.t)
                 v_W_hat = self.v_W[layer_idx] / (1 - self.beta2 ** self.t)
 
-                layer.W -= self.learning_rate * m_W_hat / (np.sqrt(v_W_hat) + self.epsilon)
+                layer.W -= self.learning_rate * m_W_hat / (sqrt(v_W_hat) + self.epsilon)
                 
                 if hasattr(layer, 'b') and layer.b is not None and hasattr(layer, 'db') and layer.db is not None:
                     self.m_b[layer_idx] = self.beta1 * self.m_b[layer_idx] + (1 - self.beta1) * layer.db
@@ -67,6 +67,6 @@ class Adam:
                     m_b_hat = self.m_b[layer_idx] / (1 - self.beta1 ** self.t)
                     v_b_hat = self.v_b[layer_idx] / (1 - self.beta2 ** self.t)
 
-                    layer.b -= self.learning_rate * m_b_hat / (np.sqrt(v_b_hat) + self.epsilon)
+                    layer.b -= self.learning_rate * m_b_hat / (sqrt(v_b_hat) + self.epsilon)
                 
                 layer_idx += 1

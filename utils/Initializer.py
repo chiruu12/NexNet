@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, zeros, random_randn
 
 
 class Initializer:
@@ -6,7 +6,7 @@ class Initializer:
     Weight initializer for neural network layers.
     
     Provides various initialization strategies to help with training
-    stability and convergence.
+    stability and convergence. Supports both CPU and GPU backends.
     """
     
     def __init__(self, method='xavier'):
@@ -29,21 +29,22 @@ class Initializer:
         Returns:
             Initialized weight matrix of shape (input_dim, output_dim).
         """
+        xp = get_array_module()
         shape = (input_dim, output_dim)
         
         if self.method == 'xavier':
-            limit = np.sqrt(6 / (input_dim + output_dim))
-            return np.random.uniform(-limit, limit, size=shape)
+            limit = xp.sqrt(6 / (input_dim + output_dim))
+            return xp.random.uniform(-limit, limit, size=shape)
 
         elif self.method == 'he':
-            stddev = np.sqrt(2. / input_dim)
-            return np.random.randn(*shape) * stddev
+            stddev = xp.sqrt(2. / input_dim)
+            return random_randn(*shape) * stddev
 
         elif self.method == 'random':
-            return np.random.uniform(-0.1, 0.1, size=shape)
+            return xp.random.uniform(-0.1, 0.1, size=shape)
 
         elif self.method == 'zero':
-            return np.zeros(shape)
+            return zeros(shape)
 
         else:
             raise ValueError(f"Unsupported initialization method: {self.method}")

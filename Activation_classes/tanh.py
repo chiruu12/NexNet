@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, tanh
 
 class Tanh:
     def forward(self, input):
@@ -13,8 +13,8 @@ class Tanh:
         """
         # Store the input for use in backward pass
         self.input = input
-        # Compute the Tanh activation: np.tanh(input)
-        self.output = np.tanh(self.input)
+        # Compute the Tanh activation: tanh(input)
+        self.output = tanh(self.input)
         return self.output
         
     def backward(self, gradient_output):

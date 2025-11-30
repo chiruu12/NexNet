@@ -1,4 +1,5 @@
-import numpy as np
+from core.backend import get_array_module, dot, exp, max, sum, zeros_like, diagflat
+
 
 class Softmax:
     def forward(self, inputs):
@@ -12,9 +13,9 @@ class Softmax:
             np.ndarray: Output data after applying the Softmax activation function, of the same shape as the input.
         """
         # Compute exponentiated values, with numerical stability
-        exp_inputs = np.exp(inputs - np.max(inputs, axis=1, keepdims=True))
+        exp_inputs = exp(inputs - max(inputs, axis=1, keepdims=True))
         # normalize by the sum of all the exp values
-        self.outputs = exp_inputs / np.sum(exp_inputs, axis=1, keepdims=True)
+        self.outputs = exp_inputs / sum(exp_inputs, axis=1, keepdims=True)
         return self.outputs
 
     def backward(self, d_outputs):
@@ -29,7 +30,7 @@ class Softmax:
         """
         batch_size = self.outputs.shape[0]
         # Initialize gradient of the input
-        d_inputs = np.zeros_like(d_outputs)
+        d_inputs = zeros_like(d_outputs)
 
         # Compute gradients for each sample in the batch
         for i in range(batch_size):
@@ -37,8 +38,8 @@ class Softmax:
             single_grad_output = d_outputs[i]
 
             # Jacobian matrix for the softmax function
-            jacobian_matrix = np.diagflat(single_output) - np.dot(single_output, single_output.T)
+            jacobian_matrix = diagflat(single_output) - dot(single_output, single_output.T)
             # Compute gradient for the current sample
-            d_inputs[i] = np.dot(jacobian_matrix, single_grad_output)
+            d_inputs[i] = dot(jacobian_matrix, single_grad_output)
 
         return d_inputs

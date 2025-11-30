@@ -1,4 +1,5 @@
-import numpy as np
+import math
+from core.backend import get_array_module, exp, sqrt, tanh, erf
 
 
 class GELU:
@@ -36,10 +37,9 @@ class GELU:
         self.input = x
         
         if self.approximate:
-            self.output = 0.5 * x * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * x ** 3)))
+            self.output = 0.5 * x * (1 + tanh(sqrt(2 / math.pi) * (x + 0.044715 * x ** 3)))
         else:
-            from scipy.special import erf
-            self.output = 0.5 * x * (1 + erf(x / np.sqrt(2)))
+            self.output = 0.5 * x * (1 + erf(x / sqrt(2)))
             
         return self.output
     
@@ -56,17 +56,16 @@ class GELU:
         x = self.input
         
         if self.approximate:
-            tanh_arg = np.sqrt(2 / np.pi) * (x + 0.044715 * x ** 3)
-            tanh_val = np.tanh(tanh_arg)
+            tanh_arg = sqrt(2 / math.pi) * (x + 0.044715 * x ** 3)
+            tanh_val = tanh(tanh_arg)
             sech2 = 1 - tanh_val ** 2
             
-            dtanh = np.sqrt(2 / np.pi) * (1 + 3 * 0.044715 * x ** 2)
+            dtanh = sqrt(2 / math.pi) * (1 + 3 * 0.044715 * x ** 2)
             
             dgelu = 0.5 * (1 + tanh_val) + 0.5 * x * sech2 * dtanh
         else:
-            from scipy.special import erf
-            phi = 0.5 * (1 + erf(x / np.sqrt(2)))
-            pdf = np.exp(-0.5 * x ** 2) / np.sqrt(2 * np.pi)
+            phi = 0.5 * (1 + erf(x / sqrt(2)))
+            pdf = exp(-0.5 * x ** 2) / sqrt(2 * math.pi)
             dgelu = phi + x * pdf
             
         self.diffv = gradient_output * dgelu

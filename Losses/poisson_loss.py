@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, log, maximum, mean
 
 
 class PoissonLoss:
@@ -25,10 +25,10 @@ class PoissonLoss:
         Returns:
             The computed Poisson loss (scalar).
         """
-        self.predictions = np.maximum(predictions, 1e-8)
+        self.predictions = maximum(predictions, 1e-8)
         self.targets = targets
         
-        self.loss = np.mean(self.predictions - targets * np.log(self.predictions))
+        self.loss = mean(self.predictions - targets * log(self.predictions))
         return self.loss
 
     def backward(self):

@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, zeros_like, exp
 
 
 class Sigmoid:
@@ -7,6 +7,7 @@ class Sigmoid:
     
     Maps input values to the range (0, 1), useful for binary
     classification and gates in recurrent networks.
+    Supports both CPU (NumPy) and GPU (CuPy) backends.
     """
     
     def forward(self, inputs):
@@ -28,16 +29,17 @@ class Sigmoid:
         Numerically stable sigmoid implementation.
         
         Handles both large positive and large negative values
-        to prevent overflow in np.exp().
+        to prevent overflow in exp().
         """
+        xp = get_array_module(x)
         positive_mask = x >= 0
         negative_mask = ~positive_mask
         
-        result = np.zeros_like(x, dtype=np.float64)
+        result = zeros_like(x)
         
-        result[positive_mask] = 1 / (1 + np.exp(-x[positive_mask]))
+        result[positive_mask] = 1 / (1 + exp(-x[positive_mask]))
         
-        exp_x = np.exp(x[negative_mask])
+        exp_x = exp(x[negative_mask])
         result[negative_mask] = exp_x / (1 + exp_x)
         
         return result

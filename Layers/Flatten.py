@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module
 
 
 class Flatten:

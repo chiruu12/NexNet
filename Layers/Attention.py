@@ -1,10 +1,14 @@
-import numpy as np
+from core.backend import (
+    get_array_module, zeros, zeros_like, random_randn, sqrt, dot, 
+    exp, sum as xp_sum, max as xp_max, matmul, random_rand, triu, ones
+)
 
 
 def softmax(x, axis=-1):
     """Numerically stable softmax."""
-    exp_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
-    return exp_x / np.sum(exp_x, axis=axis, keepdims=True)
+    xp = get_array_module(x)
+    exp_x = exp(x - xp_max(x, axis=axis, keepdims=True))
+    return exp_x / xp_sum(exp_x, axis=axis, keepdims=True)
 
 
 class ScaledDotProductAttention:
@@ -16,6 +20,8 @@ class ScaledDotProductAttention:
     Supports optional masking for:
     - Causal/autoregressive attention (GPT-style)
     - Padding mask for variable length sequences
+    
+    Supports both NumPy and CuPy backends transparently.
     """
     
     def __init__(self, dropout_rate=0.0):
@@ -43,15 +49,16 @@ class ScaledDotProductAttention:
             output: Attention output of shape (batch, seq_len_q, d_v).
             attention_weights: Attention weights of shape (batch, seq_len_q, seq_len_k).
         """
+        xp = get_array_module(query)
         self.query = query
         self.key = key
         self.value = value
         self.mask = mask
         
         self.d_k = query.shape[-1]
-        self.scale = np.sqrt(self.d_k)
+        self.scale = sqrt(self.d_k)
         
-        scores = np.matmul(query, key.transpose(0, 2, 1)) / self.scale
+        scores = matmul(query, key.transpose(0, 2, 1)) / self.scale
         
         if mask is not None:
             scores = scores + mask
@@ -59,12 +66,12 @@ class ScaledDotProductAttention:
         self.attention_weights = softmax(scores, axis=-1)
         
         if self.training and self.dropout_rate > 0:
-            self.dropout_mask = (np.random.rand(*self.attention_weights.shape) > self.dropout_rate).astype(np.float64)
+            self.dropout_mask = (random_rand(*self.attention_weights.shape) > self.dropout_rate).astype(xp.float64)
             self.attention_weights_dropped = self.attention_weights * self.dropout_mask / (1 - self.dropout_rate)
         else:
             self.attention_weights_dropped = self.attention_weights
             
-        self.output = np.matmul(self.attention_weights_dropped, value)
+        self.output = matmul(self.attention_weights_dropped, value)
         
         return self.output, self.attention_weights
     
@@ -80,19 +87,19 @@ class ScaledDotProductAttention:
             dkey: Gradient w.r.t. key.
             dvalue: Gradient w.r.t. value.
         """
-        dvalue = np.matmul(self.attention_weights_dropped.transpose(0, 2, 1), gradient_output)
+        dvalue = matmul(self.attention_weights_dropped.transpose(0, 2, 1), gradient_output)
         
-        d_attn_weights = np.matmul(gradient_output, self.value.transpose(0, 2, 1))
+        d_attn_weights = matmul(gradient_output, self.value.transpose(0, 2, 1))
         
         if self.training and self.dropout_rate > 0:
             d_attn_weights = d_attn_weights * self.dropout_mask / (1 - self.dropout_rate)
             
-        d_scores = self.attention_weights * (d_attn_weights - np.sum(d_attn_weights * self.attention_weights, axis=-1, keepdims=True))
+        d_scores = self.attention_weights * (d_attn_weights - xp_sum(d_attn_weights * self.attention_weights, axis=-1, keepdims=True))
         
         d_scores = d_scores / self.scale
         
-        dquery = np.matmul(d_scores, self.key)
-        dkey = np.matmul(d_scores.transpose(0, 2, 1), self.query)
+        dquery = matmul(d_scores, self.key)
+        dkey = matmul(d_scores.transpose(0, 2, 1), self.query)
         
         return dquery, dkey, dvalue
     
@@ -114,6 +121,8 @@ class MultiHeadAttention:
     
     MultiHead(Q, K, V) = Concat(head_1, ..., head_h) * W_O
     where head_i = Attention(Q * W_Q_i, K * W_K_i, V * W_V_i)
+    
+    Supports both NumPy and CuPy backends transparently.
     """
     
     def __init__(self, d_model, num_heads, dropout_rate=0.0):
@@ -133,17 +142,17 @@ class MultiHeadAttention:
         self.dropout_rate = dropout_rate
         self.training = True
         
-        scale = np.sqrt(2.0 / (d_model + self.d_k))
+        scale = sqrt(2.0 / (d_model + self.d_k))
         
-        self.W_Q = np.random.randn(d_model, d_model) * scale
-        self.W_K = np.random.randn(d_model, d_model) * scale
-        self.W_V = np.random.randn(d_model, d_model) * scale
-        self.W_O = np.random.randn(d_model, d_model) * scale
+        self.W_Q = random_randn(d_model, d_model) * scale
+        self.W_K = random_randn(d_model, d_model) * scale
+        self.W_V = random_randn(d_model, d_model) * scale
+        self.W_O = random_randn(d_model, d_model) * scale
         
-        self.b_Q = np.zeros((1, d_model))
-        self.b_K = np.zeros((1, d_model))
-        self.b_V = np.zeros((1, d_model))
-        self.b_O = np.zeros((1, d_model))
+        self.b_Q = zeros((1, d_model))
+        self.b_K = zeros((1, d_model))
+        self.b_V = zeros((1, d_model))
+        self.b_O = zeros((1, d_model))
         
         self._init_gradients()
         
@@ -151,15 +160,15 @@ class MultiHeadAttention:
         
     def _init_gradients(self):
         """Initialize gradient accumulators."""
-        self.dW_Q = np.zeros_like(self.W_Q)
-        self.dW_K = np.zeros_like(self.W_K)
-        self.dW_V = np.zeros_like(self.W_V)
-        self.dW_O = np.zeros_like(self.W_O)
+        self.dW_Q = zeros_like(self.W_Q)
+        self.dW_K = zeros_like(self.W_K)
+        self.dW_V = zeros_like(self.W_V)
+        self.dW_O = zeros_like(self.W_O)
         
-        self.db_Q = np.zeros_like(self.b_Q)
-        self.db_K = np.zeros_like(self.b_K)
-        self.db_V = np.zeros_like(self.b_V)
-        self.db_O = np.zeros_like(self.b_O)
+        self.db_Q = zeros_like(self.b_Q)
+        self.db_K = zeros_like(self.b_K)
+        self.db_V = zeros_like(self.b_V)
+        self.db_O = zeros_like(self.b_O)
         
     def _split_heads(self, x):
         """
@@ -203,15 +212,16 @@ class MultiHeadAttention:
             output: Attention output of shape (batch, seq_len_q, d_model).
             attention_weights: Attention weights from all heads.
         """
+        xp = get_array_module(query)
         self.query_input = query
         self.key_input = key
         self.value_input = value
         
         batch_size = query.shape[0]
         
-        Q = np.dot(query.reshape(-1, self.d_model), self.W_Q).reshape(batch_size, -1, self.d_model) + self.b_Q
-        K = np.dot(key.reshape(-1, self.d_model), self.W_K).reshape(batch_size, -1, self.d_model) + self.b_K
-        V = np.dot(value.reshape(-1, self.d_model), self.W_V).reshape(batch_size, -1, self.d_model) + self.b_V
+        Q = dot(query.reshape(-1, self.d_model), self.W_Q).reshape(batch_size, -1, self.d_model) + self.b_Q
+        K = dot(key.reshape(-1, self.d_model), self.W_K).reshape(batch_size, -1, self.d_model) + self.b_K
+        V = dot(value.reshape(-1, self.d_model), self.W_V).reshape(batch_size, -1, self.d_model) + self.b_V
         
         self.Q_projected = Q
         self.K_projected = K
@@ -229,7 +239,7 @@ class MultiHeadAttention:
         V_heads_flat = V_heads.reshape(batch_size * self.num_heads, -1, self.d_k)
         
         if mask is not None:
-            mask_expanded = np.tile(mask, (1, self.num_heads, 1, 1)).reshape(batch_size * self.num_heads, mask.shape[2], mask.shape[3])
+            mask_expanded = xp.tile(mask, (1, self.num_heads, 1, 1)).reshape(batch_size * self.num_heads, mask.shape[2], mask.shape[3])
         else:
             mask_expanded = None
             
@@ -238,7 +248,7 @@ class MultiHeadAttention:
         attn_output = attn_output.reshape(batch_size, self.num_heads, -1, self.d_k)
         self.attn_output_combined = self._combine_heads(attn_output)
         
-        self.output = np.dot(self.attn_output_combined.reshape(-1, self.d_model), self.W_O).reshape(batch_size, -1, self.d_model) + self.b_O
+        self.output = dot(self.attn_output_combined.reshape(-1, self.d_model), self.W_O).reshape(batch_size, -1, self.d_model) + self.b_O
         
         self.attention_weights = attn_weights.reshape(batch_size, self.num_heads, -1, attn_weights.shape[-1])
         
@@ -261,10 +271,10 @@ class MultiHeadAttention:
         seq_len_k = self.key_input.shape[1]
         
         grad_flat = gradient_output.reshape(-1, self.d_model)
-        self.dW_O = np.dot(self.attn_output_combined.reshape(-1, self.d_model).T, grad_flat)
-        self.db_O = np.sum(grad_flat, axis=0, keepdims=True)
+        self.dW_O = dot(self.attn_output_combined.reshape(-1, self.d_model).T, grad_flat)
+        self.db_O = xp_sum(grad_flat, axis=0, keepdims=True)
         
-        d_attn_combined = np.dot(grad_flat, self.W_O.T).reshape(batch_size, seq_len_q, self.d_model)
+        d_attn_combined = dot(grad_flat, self.W_O.T).reshape(batch_size, seq_len_q, self.d_model)
         
         d_attn_heads = self._split_heads(d_attn_combined)
         d_attn_flat = d_attn_heads.reshape(batch_size * self.num_heads, seq_len_q, self.d_k)
@@ -283,17 +293,17 @@ class MultiHeadAttention:
         dK_flat = dK.reshape(-1, self.d_model)
         dV_flat = dV.reshape(-1, self.d_model)
         
-        self.dW_Q = np.dot(self.query_input.reshape(-1, self.d_model).T, dQ_flat)
-        self.dW_K = np.dot(self.key_input.reshape(-1, self.d_model).T, dK_flat)
-        self.dW_V = np.dot(self.value_input.reshape(-1, self.d_model).T, dV_flat)
+        self.dW_Q = dot(self.query_input.reshape(-1, self.d_model).T, dQ_flat)
+        self.dW_K = dot(self.key_input.reshape(-1, self.d_model).T, dK_flat)
+        self.dW_V = dot(self.value_input.reshape(-1, self.d_model).T, dV_flat)
         
-        self.db_Q = np.sum(dQ_flat, axis=0, keepdims=True)
-        self.db_K = np.sum(dK_flat, axis=0, keepdims=True)
-        self.db_V = np.sum(dV_flat, axis=0, keepdims=True)
+        self.db_Q = xp_sum(dQ_flat, axis=0, keepdims=True)
+        self.db_K = xp_sum(dK_flat, axis=0, keepdims=True)
+        self.db_V = xp_sum(dV_flat, axis=0, keepdims=True)
         
-        dquery = np.dot(dQ_flat, self.W_Q.T).reshape(batch_size, seq_len_q, self.d_model)
-        dkey = np.dot(dK_flat, self.W_K.T).reshape(batch_size, seq_len_k, self.d_model)
-        dvalue = np.dot(dV_flat, self.W_V.T).reshape(batch_size, seq_len_k, self.d_model)
+        dquery = dot(dQ_flat, self.W_Q.T).reshape(batch_size, seq_len_q, self.d_model)
+        dkey = dot(dK_flat, self.W_K.T).reshape(batch_size, seq_len_k, self.d_model)
+        dvalue = dot(dV_flat, self.W_V.T).reshape(batch_size, seq_len_k, self.d_model)
         
         return dquery, dkey, dvalue
     
@@ -320,6 +330,7 @@ def create_causal_mask(seq_length):
     Returns:
         Mask tensor of shape (1, 1, seq_length, seq_length) with -inf for masked positions.
     """
+    import numpy as np  # Need numpy for creating initial mask
     mask = np.triu(np.ones((seq_length, seq_length)), k=1)
     mask = mask * -1e9
     return mask[np.newaxis, np.newaxis, :, :]
@@ -336,6 +347,7 @@ def create_padding_mask(seq, pad_idx=0):
     Returns:
         Mask tensor of shape (batch, 1, 1, seq_length) with -inf for pad positions.
     """
-    mask = (seq == pad_idx).astype(np.float64)
+    xp = get_array_module(seq)
+    mask = (seq == pad_idx).astype(xp.float64)
     mask = mask * -1e9
-    return mask[:, np.newaxis, np.newaxis, :]
+    return mask[:, xp.newaxis, xp.newaxis, :]

@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, random_randn, sqrt, zeros_like
 
 
 class Embedding:
@@ -26,12 +26,12 @@ class Embedding:
         self.embedding_dim = embedding_dim
         
         if initialization == 'xavier':
-            scale = np.sqrt(2.0 / (vocab_size + embedding_dim))
+            scale = sqrt(2.0 / (vocab_size + embedding_dim))
         else:
             scale = 0.01
             
-        self.W = np.random.randn(vocab_size, embedding_dim) * scale
-        self.dW = np.zeros_like(self.W)
+        self.W = random_randn(vocab_size, embedding_dim) * scale
+        self.dW = zeros_like(self.W)
         
     def forward(self, x):
         """
@@ -58,7 +58,7 @@ class Embedding:
         Returns:
             None (no gradient for integer inputs).
         """
-        self.dW = np.zeros_like(self.W)
+        self.dW = zeros_like(self.W)
         
         batch_size, seq_length, _ = gradient_output.shape
         

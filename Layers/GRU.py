@@ -1,4 +1,7 @@
-import numpy as np
+from core.backend import (
+    get_array_module, zeros, zeros_like, random_randn, sqrt, dot, 
+    tanh, exp, sum as xp_sum, stack
+)
 
 
 class GRU:
@@ -10,6 +13,8 @@ class GRU:
     
     Input shape: (batch_size, sequence_length, input_size)
     Output shape: (batch_size, sequence_length, hidden_size) or (batch_size, hidden_size)
+    
+    Supports both NumPy and CuPy backends transparently.
     """
     
     def __init__(self, input_size, hidden_size, return_sequences=True, initialization='xavier'):
@@ -32,50 +37,51 @@ class GRU:
     def _initialize_weights(self, method):
         """Initialize weights and biases for all gates."""
         if method == 'xavier':
-            scale_ih = np.sqrt(2.0 / (self.input_size + self.hidden_size))
-            scale_hh = np.sqrt(2.0 / (self.hidden_size + self.hidden_size))
+            scale_ih = sqrt(2.0 / (self.input_size + self.hidden_size))
+            scale_hh = sqrt(2.0 / (self.hidden_size + self.hidden_size))
         elif method == 'he':
-            scale_ih = np.sqrt(2.0 / self.input_size)
-            scale_hh = np.sqrt(2.0 / self.hidden_size)
+            scale_ih = sqrt(2.0 / self.input_size)
+            scale_hh = sqrt(2.0 / self.hidden_size)
         else:
             scale_ih = 0.01
             scale_hh = 0.01
             
-        self.W_z = np.random.randn(self.input_size, self.hidden_size) * scale_ih
-        self.U_z = np.random.randn(self.hidden_size, self.hidden_size) * scale_hh
-        self.b_z = np.zeros((1, self.hidden_size))
+        self.W_z = random_randn(self.input_size, self.hidden_size) * scale_ih
+        self.U_z = random_randn(self.hidden_size, self.hidden_size) * scale_hh
+        self.b_z = zeros((1, self.hidden_size))
         
-        self.W_r = np.random.randn(self.input_size, self.hidden_size) * scale_ih
-        self.U_r = np.random.randn(self.hidden_size, self.hidden_size) * scale_hh
-        self.b_r = np.zeros((1, self.hidden_size))
+        self.W_r = random_randn(self.input_size, self.hidden_size) * scale_ih
+        self.U_r = random_randn(self.hidden_size, self.hidden_size) * scale_hh
+        self.b_r = zeros((1, self.hidden_size))
         
-        self.W_h = np.random.randn(self.input_size, self.hidden_size) * scale_ih
-        self.U_h = np.random.randn(self.hidden_size, self.hidden_size) * scale_hh
-        self.b_h = np.zeros((1, self.hidden_size))
+        self.W_h = random_randn(self.input_size, self.hidden_size) * scale_ih
+        self.U_h = random_randn(self.hidden_size, self.hidden_size) * scale_hh
+        self.b_h = zeros((1, self.hidden_size))
         
         self._init_gradients()
         
     def _init_gradients(self):
         """Initialize gradient accumulators."""
-        self.dW_z = np.zeros_like(self.W_z)
-        self.dU_z = np.zeros_like(self.U_z)
-        self.db_z = np.zeros_like(self.b_z)
+        self.dW_z = zeros_like(self.W_z)
+        self.dU_z = zeros_like(self.U_z)
+        self.db_z = zeros_like(self.b_z)
         
-        self.dW_r = np.zeros_like(self.W_r)
-        self.dU_r = np.zeros_like(self.U_r)
-        self.db_r = np.zeros_like(self.b_r)
+        self.dW_r = zeros_like(self.W_r)
+        self.dU_r = zeros_like(self.U_r)
+        self.db_r = zeros_like(self.b_r)
         
-        self.dW_h = np.zeros_like(self.W_h)
-        self.dU_h = np.zeros_like(self.U_h)
-        self.db_h = np.zeros_like(self.b_h)
+        self.dW_h = zeros_like(self.W_h)
+        self.dU_h = zeros_like(self.U_h)
+        self.db_h = zeros_like(self.b_h)
         
     def _sigmoid(self, x):
         """Numerically stable sigmoid."""
+        xp = get_array_module(x)
         positive_mask = x >= 0
         negative_mask = ~positive_mask
-        result = np.zeros_like(x, dtype=np.float64)
-        result[positive_mask] = 1 / (1 + np.exp(-x[positive_mask]))
-        exp_x = np.exp(x[negative_mask])
+        result = xp.zeros_like(x, dtype=xp.float64)
+        result[positive_mask] = 1 / (1 + exp(-x[positive_mask]))
+        exp_x = exp(x[negative_mask])
         result[negative_mask] = exp_x / (1 + exp_x)
         return result
         
@@ -91,11 +97,12 @@ class GRU:
             If return_sequences: Output tensor (batch_size, sequence_length, hidden_size).
             Else: Output tensor (batch_size, hidden_size).
         """
+        xp = get_array_module(x)
         self.inputs = x
         batch_size, seq_length, _ = x.shape
         
         if h_0 is None:
-            h_0 = np.zeros((batch_size, self.hidden_size))
+            h_0 = xp.zeros((batch_size, self.hidden_size))
             
         self.hidden_states = [h_0]
         
@@ -108,10 +115,10 @@ class GRU:
         for t in range(seq_length):
             x_t = x[:, t, :]
             
-            z_t = self._sigmoid(np.dot(x_t, self.W_z) + np.dot(h_t, self.U_z) + self.b_z)
-            r_t = self._sigmoid(np.dot(x_t, self.W_r) + np.dot(h_t, self.U_r) + self.b_r)
+            z_t = self._sigmoid(dot(x_t, self.W_z) + dot(h_t, self.U_z) + self.b_z)
+            r_t = self._sigmoid(dot(x_t, self.W_r) + dot(h_t, self.U_r) + self.b_r)
             
-            h_tilde = np.tanh(np.dot(x_t, self.W_h) + np.dot(r_t * h_t, self.U_h) + self.b_h)
+            h_tilde = tanh(dot(x_t, self.W_h) + dot(r_t * h_t, self.U_h) + self.b_h)
             
             h_t = (1 - z_t) * h_t + z_t * h_tilde
             
@@ -123,7 +130,7 @@ class GRU:
         self.hidden_states = self.hidden_states[1:]
         
         if self.return_sequences:
-            self.output = np.stack(self.hidden_states, axis=1)
+            self.output = stack(self.hidden_states, axis=1)
         else:
             self.output = self.hidden_states[-1]
             
@@ -139,16 +146,17 @@ class GRU:
         Returns:
             Gradient with respect to the input.
         """
+        xp = get_array_module(self.inputs)
         batch_size, seq_length, _ = self.inputs.shape
         
         self._init_gradients()
         
-        dx = np.zeros_like(self.inputs)
+        dx = xp.zeros_like(self.inputs)
         
-        dh_next = np.zeros((batch_size, self.hidden_size))
+        dh_next = xp.zeros((batch_size, self.hidden_size))
         
         if not self.return_sequences:
-            dh_seq = np.zeros((batch_size, seq_length, self.hidden_size))
+            dh_seq = xp.zeros((batch_size, seq_length, self.hidden_size))
             dh_seq[:, -1, :] = gradient_output
             gradient_output = dh_seq
             
@@ -163,7 +171,7 @@ class GRU:
             if t > 0:
                 h_prev = self.hidden_states[t - 1]
             else:
-                h_prev = np.zeros((batch_size, self.hidden_size))
+                h_prev = xp.zeros((batch_size, self.hidden_size))
                 
             dh_tilde = dh * z_t
             dz = dh * (h_tilde - h_prev)
@@ -173,30 +181,30 @@ class GRU:
             
             x_t = self.inputs[:, t, :]
             
-            self.dW_h += np.dot(x_t.T, dh_tilde_pre)
-            self.dU_h += np.dot((r_t * h_prev).T, dh_tilde_pre)
-            self.db_h += np.sum(dh_tilde_pre, axis=0, keepdims=True)
+            self.dW_h += dot(x_t.T, dh_tilde_pre)
+            self.dU_h += dot((r_t * h_prev).T, dh_tilde_pre)
+            self.db_h += xp_sum(dh_tilde_pre, axis=0, keepdims=True)
             
-            self.dW_z += np.dot(x_t.T, dz_pre)
-            self.dU_z += np.dot(h_prev.T, dz_pre)
-            self.db_z += np.sum(dz_pre, axis=0, keepdims=True)
+            self.dW_z += dot(x_t.T, dz_pre)
+            self.dU_z += dot(h_prev.T, dz_pre)
+            self.db_z += xp_sum(dz_pre, axis=0, keepdims=True)
             
-            dr_h = np.dot(dh_tilde_pre, self.U_h.T)
+            dr_h = dot(dh_tilde_pre, self.U_h.T)
             dr = dr_h * h_prev
             dr_pre = dr * r_t * (1 - r_t)
             
-            self.dW_r += np.dot(x_t.T, dr_pre)
-            self.dU_r += np.dot(h_prev.T, dr_pre)
-            self.db_r += np.sum(dr_pre, axis=0, keepdims=True)
+            self.dW_r += dot(x_t.T, dr_pre)
+            self.dU_r += dot(h_prev.T, dr_pre)
+            self.db_r += xp_sum(dr_pre, axis=0, keepdims=True)
             
-            dx[:, t, :] = (np.dot(dh_tilde_pre, self.W_h.T) + 
-                          np.dot(dz_pre, self.W_z.T) + 
-                          np.dot(dr_pre, self.W_r.T))
+            dx[:, t, :] = (dot(dh_tilde_pre, self.W_h.T) + 
+                          dot(dz_pre, self.W_z.T) + 
+                          dot(dr_pre, self.W_r.T))
             
             dh_next = (dh * (1 - z_t) + 
                       dr_h * r_t + 
-                      np.dot(dz_pre, self.U_z.T) + 
-                      np.dot(dr_pre, self.U_r.T))
+                      dot(dz_pre, self.U_z.T) + 
+                      dot(dr_pre, self.U_r.T))
             
         return dx
     

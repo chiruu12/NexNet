@@ -1,4 +1,7 @@
-import numpy as np
+from core.backend import (
+    get_array_module, zeros, zeros_like, random_randn, sqrt, dot, 
+    tanh, maximum, sum as xp_sum, random_rand
+)
 from .Attention import MultiHeadAttention, create_causal_mask
 from .LayerNorm import LayerNorm
 
@@ -12,6 +15,8 @@ class FeedForward:
     FFN(x) = GELU(xW1 + b1)W2 + b2    (with GELU, used in GPT)
     
     Typically d_ff = 4 * d_model.
+    
+    Supports both NumPy and CuPy backends transparently.
     """
     
     def __init__(self, d_model, d_ff, dropout_rate=0.1, activation='gelu'):
@@ -30,33 +35,35 @@ class FeedForward:
         self.activation_type = activation
         self.training = True
         
-        scale1 = np.sqrt(2.0 / (d_model + d_ff))
-        scale2 = np.sqrt(2.0 / (d_ff + d_model))
+        scale1 = sqrt(2.0 / (d_model + d_ff))
+        scale2 = sqrt(2.0 / (d_ff + d_model))
         
-        self.W1 = np.random.randn(d_model, d_ff) * scale1
-        self.b1 = np.zeros((1, d_ff))
-        self.W2 = np.random.randn(d_ff, d_model) * scale2
-        self.b2 = np.zeros((1, d_model))
+        self.W1 = random_randn(d_model, d_ff) * scale1
+        self.b1 = zeros((1, d_ff))
+        self.W2 = random_randn(d_ff, d_model) * scale2
+        self.b2 = zeros((1, d_model))
         
         self._init_gradients()
         
     def _init_gradients(self):
         """Initialize gradient accumulators."""
-        self.dW1 = np.zeros_like(self.W1)
-        self.db1 = np.zeros_like(self.b1)
-        self.dW2 = np.zeros_like(self.W2)
-        self.db2 = np.zeros_like(self.b2)
+        self.dW1 = zeros_like(self.W1)
+        self.db1 = zeros_like(self.b1)
+        self.dW2 = zeros_like(self.W2)
+        self.db2 = zeros_like(self.b2)
         
     def _gelu(self, x):
         """GELU activation."""
-        return 0.5 * x * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * x ** 3)))
+        import math
+        return 0.5 * x * (1 + tanh(sqrt(2 / math.pi) * (x + 0.044715 * x ** 3)))
     
     def _gelu_backward(self, x, grad):
         """GELU backward."""
-        tanh_arg = np.sqrt(2 / np.pi) * (x + 0.044715 * x ** 3)
-        tanh_val = np.tanh(tanh_arg)
+        import math
+        tanh_arg = sqrt(2 / math.pi) * (x + 0.044715 * x ** 3)
+        tanh_val = tanh(tanh_arg)
         sech2 = 1 - tanh_val ** 2
-        dtanh = np.sqrt(2 / np.pi) * (1 + 3 * 0.044715 * x ** 2)
+        dtanh = sqrt(2 / math.pi) * (1 + 3 * 0.044715 * x ** 2)
         dgelu = 0.5 * (1 + tanh_val) + 0.5 * x * sech2 * dtanh
         return grad * dgelu
         
@@ -70,25 +77,26 @@ class FeedForward:
         Returns:
             Output tensor of shape (batch, seq_len, d_model).
         """
+        xp = get_array_module(x)
         self.input = x
         batch_size, seq_len, _ = x.shape
         
         x_flat = x.reshape(-1, self.d_model)
         
-        self.hidden_pre = np.dot(x_flat, self.W1) + self.b1
+        self.hidden_pre = dot(x_flat, self.W1) + self.b1
         
         if self.activation_type == 'gelu':
             self.hidden = self._gelu(self.hidden_pre)
         else:
-            self.hidden = np.maximum(0, self.hidden_pre)
+            self.hidden = maximum(0, self.hidden_pre)
             
         if self.training and self.dropout_rate > 0:
-            self.dropout_mask = (np.random.rand(*self.hidden.shape) > self.dropout_rate).astype(np.float64)
+            self.dropout_mask = (random_rand(*self.hidden.shape) > self.dropout_rate).astype(xp.float64)
             self.hidden_dropped = self.hidden * self.dropout_mask / (1 - self.dropout_rate)
         else:
             self.hidden_dropped = self.hidden
             
-        output_flat = np.dot(self.hidden_dropped, self.W2) + self.b2
+        output_flat = dot(self.hidden_dropped, self.W2) + self.b2
         
         self.output = output_flat.reshape(batch_size, seq_len, self.d_model)
         
@@ -104,13 +112,14 @@ class FeedForward:
         Returns:
             Gradient with respect to input.
         """
+        xp = get_array_module(gradient_output)
         batch_size, seq_len, _ = gradient_output.shape
         grad_flat = gradient_output.reshape(-1, self.d_model)
         
-        self.dW2 = np.dot(self.hidden_dropped.T, grad_flat)
-        self.db2 = np.sum(grad_flat, axis=0, keepdims=True)
+        self.dW2 = dot(self.hidden_dropped.T, grad_flat)
+        self.db2 = xp_sum(grad_flat, axis=0, keepdims=True)
         
-        d_hidden_dropped = np.dot(grad_flat, self.W2.T)
+        d_hidden_dropped = dot(grad_flat, self.W2.T)
         
         if self.training and self.dropout_rate > 0:
             d_hidden = d_hidden_dropped * self.dropout_mask / (1 - self.dropout_rate)
@@ -120,12 +129,12 @@ class FeedForward:
         if self.activation_type == 'gelu':
             d_hidden_pre = self._gelu_backward(self.hidden_pre, d_hidden)
         else:
-            d_hidden_pre = d_hidden * (self.hidden_pre > 0).astype(np.float64)
+            d_hidden_pre = d_hidden * (self.hidden_pre > 0).astype(xp.float64)
             
-        self.dW1 = np.dot(self.input.reshape(-1, self.d_model).T, d_hidden_pre)
-        self.db1 = np.sum(d_hidden_pre, axis=0, keepdims=True)
+        self.dW1 = dot(self.input.reshape(-1, self.d_model).T, d_hidden_pre)
+        self.db1 = xp_sum(d_hidden_pre, axis=0, keepdims=True)
         
-        dx_flat = np.dot(d_hidden_pre, self.W1.T)
+        dx_flat = dot(d_hidden_pre, self.W1.T)
         dx = dx_flat.reshape(batch_size, seq_len, self.d_model)
         
         return dx
@@ -148,6 +157,8 @@ class TransformerDecoderBlock:
     2. Feed-Forward Network + Residual + LayerNorm
     
     Uses Pre-LN architecture (LayerNorm before attention/FFN) for better training stability.
+    
+    Supports both NumPy and CuPy backends transparently.
     """
     
     def __init__(self, d_model, num_heads, d_ff, dropout_rate=0.1, pre_norm=True):
@@ -184,6 +195,7 @@ class TransformerDecoderBlock:
         Returns:
             Output tensor of shape (batch, seq_len, d_model).
         """
+        xp = get_array_module(x)
         self.input = x
         
         if self.pre_norm:
@@ -191,7 +203,7 @@ class TransformerDecoderBlock:
             attn_output, self.attn_weights = self.attention.forward(x_norm1, x_norm1, x_norm1, mask)
             
             if self.training and self.dropout_rate > 0:
-                self.dropout_mask1 = (np.random.rand(*attn_output.shape) > self.dropout_rate).astype(np.float64)
+                self.dropout_mask1 = (random_rand(*attn_output.shape) > self.dropout_rate).astype(xp.float64)
                 attn_output = attn_output * self.dropout_mask1 / (1 - self.dropout_rate)
                 
             self.residual1 = x + attn_output
@@ -200,7 +212,7 @@ class TransformerDecoderBlock:
             ffn_output = self.ffn.forward(x_norm2)
             
             if self.training and self.dropout_rate > 0:
-                self.dropout_mask2 = (np.random.rand(*ffn_output.shape) > self.dropout_rate).astype(np.float64)
+                self.dropout_mask2 = (random_rand(*ffn_output.shape) > self.dropout_rate).astype(xp.float64)
                 ffn_output = ffn_output * self.dropout_mask2 / (1 - self.dropout_rate)
                 
             self.output = self.residual1 + ffn_output
@@ -209,7 +221,7 @@ class TransformerDecoderBlock:
             attn_output, self.attn_weights = self.attention.forward(x, x, x, mask)
             
             if self.training and self.dropout_rate > 0:
-                self.dropout_mask1 = (np.random.rand(*attn_output.shape) > self.dropout_rate).astype(np.float64)
+                self.dropout_mask1 = (random_rand(*attn_output.shape) > self.dropout_rate).astype(xp.float64)
                 attn_output = attn_output * self.dropout_mask1 / (1 - self.dropout_rate)
                 
             self.residual1 = self.ln1.forward(x + attn_output)
@@ -217,7 +229,7 @@ class TransformerDecoderBlock:
             ffn_output = self.ffn.forward(self.residual1)
             
             if self.training and self.dropout_rate > 0:
-                self.dropout_mask2 = (np.random.rand(*ffn_output.shape) > self.dropout_rate).astype(np.float64)
+                self.dropout_mask2 = (random_rand(*ffn_output.shape) > self.dropout_rate).astype(xp.float64)
                 ffn_output = ffn_output * self.dropout_mask2 / (1 - self.dropout_rate)
                 
             self.output = self.ln2.forward(self.residual1 + ffn_output)
@@ -301,6 +313,8 @@ class TransformerEncoderBlock:
     
     Similar to decoder block but without causal masking.
     Can attend to all positions in the sequence.
+    
+    Supports both NumPy and CuPy backends transparently.
     """
     
     def __init__(self, d_model, num_heads, d_ff, dropout_rate=0.1, pre_norm=True):

@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, sqrt, zeros_like
 
 
 class AdamW:
@@ -45,10 +45,10 @@ class AdamW:
         for layer in layers:
             if hasattr(layer, 'W') and layer.dW is not None:
                 if layer_idx >= len(self.m_W):
-                    self.m_W.append(np.zeros_like(layer.W))
-                    self.m_b.append(np.zeros_like(layer.b))
-                    self.v_W.append(np.zeros_like(layer.W))
-                    self.v_b.append(np.zeros_like(layer.b))
+                    self.m_W.append(zeros_like(layer.W))
+                    self.m_b.append(zeros_like(layer.b))
+                    self.v_W.append(zeros_like(layer.W))
+                    self.v_b.append(zeros_like(layer.b))
 
                 self.m_W[layer_idx] = self.beta1 * self.m_W[layer_idx] + (1 - self.beta1) * layer.dW
                 self.m_b[layer_idx] = self.beta1 * self.m_b[layer_idx] + (1 - self.beta1) * layer.db
@@ -60,7 +60,7 @@ class AdamW:
                 v_W_hat = self.v_W[layer_idx] / (1 - self.beta2 ** self.t)
                 v_b_hat = self.v_b[layer_idx] / (1 - self.beta2 ** self.t)
 
-                layer.W -= self.learning_rate * (m_W_hat / (np.sqrt(v_W_hat) + self.epsilon) + self.weight_decay * layer.W)
-                layer.b -= self.learning_rate * m_b_hat / (np.sqrt(v_b_hat) + self.epsilon)
+                layer.W -= self.learning_rate * (m_W_hat / (sqrt(v_W_hat) + self.epsilon) + self.weight_decay * layer.W)
+                layer.b -= self.learning_rate * m_b_hat / (sqrt(v_b_hat) + self.epsilon)
                 
                 layer_idx += 1

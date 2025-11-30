@@ -1,4 +1,7 @@
-import numpy as np
+from core.backend import (
+    get_array_module, zeros, zeros_like, ones, random_randn, sqrt, dot, 
+    tanh, exp, sum as xp_sum, stack
+)
 
 
 class LSTM:
@@ -10,6 +13,8 @@ class LSTM:
     
     Input shape: (batch_size, sequence_length, input_size)
     Output shape: (batch_size, sequence_length, hidden_size) or (batch_size, hidden_size)
+    
+    Supports both NumPy and CuPy backends transparently.
     """
     
     def __init__(self, input_size, hidden_size, return_sequences=True, initialization='xavier'):
@@ -32,58 +37,59 @@ class LSTM:
     def _initialize_weights(self, method):
         """Initialize weights and biases for all gates."""
         if method == 'xavier':
-            scale_ih = np.sqrt(2.0 / (self.input_size + self.hidden_size))
-            scale_hh = np.sqrt(2.0 / (self.hidden_size + self.hidden_size))
+            scale_ih = sqrt(2.0 / (self.input_size + self.hidden_size))
+            scale_hh = sqrt(2.0 / (self.hidden_size + self.hidden_size))
         elif method == 'he':
-            scale_ih = np.sqrt(2.0 / self.input_size)
-            scale_hh = np.sqrt(2.0 / self.hidden_size)
+            scale_ih = sqrt(2.0 / self.input_size)
+            scale_hh = sqrt(2.0 / self.hidden_size)
         else:
             scale_ih = 0.01
             scale_hh = 0.01
             
-        self.W_f = np.random.randn(self.input_size, self.hidden_size) * scale_ih
-        self.U_f = np.random.randn(self.hidden_size, self.hidden_size) * scale_hh
-        self.b_f = np.ones((1, self.hidden_size))
+        self.W_f = random_randn(self.input_size, self.hidden_size) * scale_ih
+        self.U_f = random_randn(self.hidden_size, self.hidden_size) * scale_hh
+        self.b_f = ones((1, self.hidden_size))
         
-        self.W_i = np.random.randn(self.input_size, self.hidden_size) * scale_ih
-        self.U_i = np.random.randn(self.hidden_size, self.hidden_size) * scale_hh
-        self.b_i = np.zeros((1, self.hidden_size))
+        self.W_i = random_randn(self.input_size, self.hidden_size) * scale_ih
+        self.U_i = random_randn(self.hidden_size, self.hidden_size) * scale_hh
+        self.b_i = zeros((1, self.hidden_size))
         
-        self.W_c = np.random.randn(self.input_size, self.hidden_size) * scale_ih
-        self.U_c = np.random.randn(self.hidden_size, self.hidden_size) * scale_hh
-        self.b_c = np.zeros((1, self.hidden_size))
+        self.W_c = random_randn(self.input_size, self.hidden_size) * scale_ih
+        self.U_c = random_randn(self.hidden_size, self.hidden_size) * scale_hh
+        self.b_c = zeros((1, self.hidden_size))
         
-        self.W_o = np.random.randn(self.input_size, self.hidden_size) * scale_ih
-        self.U_o = np.random.randn(self.hidden_size, self.hidden_size) * scale_hh
-        self.b_o = np.zeros((1, self.hidden_size))
+        self.W_o = random_randn(self.input_size, self.hidden_size) * scale_ih
+        self.U_o = random_randn(self.hidden_size, self.hidden_size) * scale_hh
+        self.b_o = zeros((1, self.hidden_size))
         
         self._init_gradients()
         
     def _init_gradients(self):
         """Initialize gradient accumulators."""
-        self.dW_f = np.zeros_like(self.W_f)
-        self.dU_f = np.zeros_like(self.U_f)
-        self.db_f = np.zeros_like(self.b_f)
+        self.dW_f = zeros_like(self.W_f)
+        self.dU_f = zeros_like(self.U_f)
+        self.db_f = zeros_like(self.b_f)
         
-        self.dW_i = np.zeros_like(self.W_i)
-        self.dU_i = np.zeros_like(self.U_i)
-        self.db_i = np.zeros_like(self.b_i)
+        self.dW_i = zeros_like(self.W_i)
+        self.dU_i = zeros_like(self.U_i)
+        self.db_i = zeros_like(self.b_i)
         
-        self.dW_c = np.zeros_like(self.W_c)
-        self.dU_c = np.zeros_like(self.U_c)
-        self.db_c = np.zeros_like(self.b_c)
+        self.dW_c = zeros_like(self.W_c)
+        self.dU_c = zeros_like(self.U_c)
+        self.db_c = zeros_like(self.b_c)
         
-        self.dW_o = np.zeros_like(self.W_o)
-        self.dU_o = np.zeros_like(self.U_o)
-        self.db_o = np.zeros_like(self.b_o)
+        self.dW_o = zeros_like(self.W_o)
+        self.dU_o = zeros_like(self.U_o)
+        self.db_o = zeros_like(self.b_o)
         
     def _sigmoid(self, x):
         """Numerically stable sigmoid."""
+        xp = get_array_module(x)
         positive_mask = x >= 0
         negative_mask = ~positive_mask
-        result = np.zeros_like(x, dtype=np.float64)
-        result[positive_mask] = 1 / (1 + np.exp(-x[positive_mask]))
-        exp_x = np.exp(x[negative_mask])
+        result = xp.zeros_like(x, dtype=xp.float64)
+        result[positive_mask] = 1 / (1 + exp(-x[positive_mask]))
+        exp_x = exp(x[negative_mask])
         result[negative_mask] = exp_x / (1 + exp_x)
         return result
         
@@ -100,13 +106,14 @@ class LSTM:
             If return_sequences: Output tensor (batch_size, sequence_length, hidden_size).
             Else: Output tensor (batch_size, hidden_size).
         """
+        xp = get_array_module(x)
         self.inputs = x
         batch_size, seq_length, _ = x.shape
         
         if h_0 is None:
-            h_0 = np.zeros((batch_size, self.hidden_size))
+            h_0 = xp.zeros((batch_size, self.hidden_size))
         if c_0 is None:
-            c_0 = np.zeros((batch_size, self.hidden_size))
+            c_0 = xp.zeros((batch_size, self.hidden_size))
             
         self.hidden_states = [h_0]
         self.cell_states = [c_0]
@@ -122,13 +129,13 @@ class LSTM:
         for t in range(seq_length):
             x_t = x[:, t, :]
             
-            f_t = self._sigmoid(np.dot(x_t, self.W_f) + np.dot(h_t, self.U_f) + self.b_f)
-            i_t = self._sigmoid(np.dot(x_t, self.W_i) + np.dot(h_t, self.U_i) + self.b_i)
-            c_tilde = np.tanh(np.dot(x_t, self.W_c) + np.dot(h_t, self.U_c) + self.b_c)
-            o_t = self._sigmoid(np.dot(x_t, self.W_o) + np.dot(h_t, self.U_o) + self.b_o)
+            f_t = self._sigmoid(dot(x_t, self.W_f) + dot(h_t, self.U_f) + self.b_f)
+            i_t = self._sigmoid(dot(x_t, self.W_i) + dot(h_t, self.U_i) + self.b_i)
+            c_tilde = tanh(dot(x_t, self.W_c) + dot(h_t, self.U_c) + self.b_c)
+            o_t = self._sigmoid(dot(x_t, self.W_o) + dot(h_t, self.U_o) + self.b_o)
             
             c_t = f_t * c_t + i_t * c_tilde
-            h_t = o_t * np.tanh(c_t)
+            h_t = o_t * tanh(c_t)
             
             self.forget_gates.append(f_t)
             self.input_gates.append(i_t)
@@ -141,7 +148,7 @@ class LSTM:
         self.cell_states = self.cell_states[1:]
         
         if self.return_sequences:
-            self.output = np.stack(self.hidden_states, axis=1)
+            self.output = stack(self.hidden_states, axis=1)
         else:
             self.output = self.hidden_states[-1]
             
@@ -157,17 +164,18 @@ class LSTM:
         Returns:
             Gradient with respect to the input.
         """
+        xp = get_array_module(self.inputs)
         batch_size, seq_length, _ = self.inputs.shape
         
         self._init_gradients()
         
-        dx = np.zeros_like(self.inputs)
+        dx = xp.zeros_like(self.inputs)
         
-        dh_next = np.zeros((batch_size, self.hidden_size))
-        dc_next = np.zeros((batch_size, self.hidden_size))
+        dh_next = xp.zeros((batch_size, self.hidden_size))
+        dc_next = xp.zeros((batch_size, self.hidden_size))
         
         if not self.return_sequences:
-            dh_seq = np.zeros((batch_size, seq_length, self.hidden_size))
+            dh_seq = xp.zeros((batch_size, seq_length, self.hidden_size))
             dh_seq[:, -1, :] = gradient_output
             gradient_output = dh_seq
             
@@ -184,10 +192,10 @@ class LSTM:
                 c_prev = self.cell_states[t - 1]
                 h_prev = self.hidden_states[t - 1]
             else:
-                c_prev = np.zeros((batch_size, self.hidden_size))
-                h_prev = np.zeros((batch_size, self.hidden_size))
+                c_prev = xp.zeros((batch_size, self.hidden_size))
+                h_prev = xp.zeros((batch_size, self.hidden_size))
                 
-            tanh_c_t = np.tanh(c_t)
+            tanh_c_t = tanh(c_t)
             
             do = dh * tanh_c_t
             dc = dh * o_t * (1 - tanh_c_t ** 2) + dc_next
@@ -203,27 +211,27 @@ class LSTM:
             
             x_t = self.inputs[:, t, :]
             
-            self.dW_f += np.dot(x_t.T, df_gate)
-            self.dU_f += np.dot(h_prev.T, df_gate)
-            self.db_f += np.sum(df_gate, axis=0, keepdims=True)
+            self.dW_f += dot(x_t.T, df_gate)
+            self.dU_f += dot(h_prev.T, df_gate)
+            self.db_f += xp_sum(df_gate, axis=0, keepdims=True)
             
-            self.dW_i += np.dot(x_t.T, di_gate)
-            self.dU_i += np.dot(h_prev.T, di_gate)
-            self.db_i += np.sum(di_gate, axis=0, keepdims=True)
+            self.dW_i += dot(x_t.T, di_gate)
+            self.dU_i += dot(h_prev.T, di_gate)
+            self.db_i += xp_sum(di_gate, axis=0, keepdims=True)
             
-            self.dW_c += np.dot(x_t.T, dc_gate)
-            self.dU_c += np.dot(h_prev.T, dc_gate)
-            self.db_c += np.sum(dc_gate, axis=0, keepdims=True)
+            self.dW_c += dot(x_t.T, dc_gate)
+            self.dU_c += dot(h_prev.T, dc_gate)
+            self.db_c += xp_sum(dc_gate, axis=0, keepdims=True)
             
-            self.dW_o += np.dot(x_t.T, do_gate)
-            self.dU_o += np.dot(h_prev.T, do_gate)
-            self.db_o += np.sum(do_gate, axis=0, keepdims=True)
+            self.dW_o += dot(x_t.T, do_gate)
+            self.dU_o += dot(h_prev.T, do_gate)
+            self.db_o += xp_sum(do_gate, axis=0, keepdims=True)
             
-            dx[:, t, :] = (np.dot(df_gate, self.W_f.T) + np.dot(di_gate, self.W_i.T) +
-                          np.dot(dc_gate, self.W_c.T) + np.dot(do_gate, self.W_o.T))
+            dx[:, t, :] = (dot(df_gate, self.W_f.T) + dot(di_gate, self.W_i.T) +
+                          dot(dc_gate, self.W_c.T) + dot(do_gate, self.W_o.T))
             
-            dh_next = (np.dot(df_gate, self.U_f.T) + np.dot(di_gate, self.U_i.T) +
-                      np.dot(dc_gate, self.U_c.T) + np.dot(do_gate, self.U_o.T))
+            dh_next = (dot(df_gate, self.U_f.T) + dot(di_gate, self.U_i.T) +
+                      dot(dc_gate, self.U_c.T) + dot(do_gate, self.U_o.T))
             dc_next = dc * f_t
             
         return dx

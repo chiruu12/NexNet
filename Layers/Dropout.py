@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, random_rand
 
 
 class Dropout:
@@ -8,6 +8,7 @@ class Dropout:
     Randomly sets a fraction of input units to zero during training,
     which helps prevent overfitting. During inference, all units are used
     but scaled appropriately.
+    Supports both CPU (NumPy) and GPU (CuPy) backends.
     """
     
     def __init__(self, rate=0.5):
@@ -34,7 +35,8 @@ class Dropout:
             Output with dropout applied during training, or scaled input during inference.
         """
         if self.training:
-            self.mask = np.random.binomial(1, 1 - self.rate, size=inputs.shape) / (1 - self.rate)
+            xp = get_array_module(inputs)
+            self.mask = (random_rand(*inputs.shape) > self.rate).astype(inputs.dtype) / (1 - self.rate)
             return inputs * self.mask
         return inputs
 

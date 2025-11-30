@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, sum, where
 class PReLU:
     def __init__(self, alpha=0.01):
         """
@@ -24,7 +24,7 @@ class PReLU:
         # Store the input for use in backward pass
         self.input = inputs
         # Compute the PReLU activation
-        self.output = np.where(inputs > 0, inputs, self.alpha * inputs)
+        self.output = where(inputs > 0, inputs, self.alpha * inputs)
         return self.output
 
     def backward(self, gradient_output):
@@ -38,10 +38,10 @@ class PReLU:
             numpy.ndarray: The gradient of the loss with respect to the input of this layer.
         """
         # Compute the gradient of the PReLU function
-        self.diffv = np.where(self.input > 0, gradient_output, self.alpha * gradient_output)
+        self.diffv = where(self.input > 0, gradient_output, self.alpha * gradient_output)
         
         # Compute the gradient with respect to alpha
         # For negative inputs,the gradient with respect to alpha is the sum of the gradient output
-        self.alpha_grad = np.sum(np.where(self.input <= 0, gradient_output * self.input, 0))
+        self.alpha_grad = sum(where(self.input <= 0, gradient_output * self.input, 0))
         
         return self.diffv

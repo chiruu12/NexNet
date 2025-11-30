@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, zeros_like
 
 
 class Momentum:
@@ -37,8 +37,8 @@ class Momentum:
         for layer in layers:
             if hasattr(layer, 'W') and hasattr(layer, 'dW'):
                 if linear_idx >= len(self.v_W):
-                    self.v_W.append(np.zeros_like(layer.W))
-                    self.v_b.append(np.zeros_like(layer.b))
+                    self.v_W.append(zeros_like(layer.W))
+                    self.v_b.append(zeros_like(layer.b))
 
                 self.v_W[linear_idx] = self.momentum * self.v_W[linear_idx] - self.learning_rate * layer.dW
                 self.v_b[linear_idx] = self.momentum * self.v_b[linear_idx] - self.learning_rate * layer.db
@@ -49,8 +49,8 @@ class Momentum:
                 
             elif hasattr(layer, 'gamma') and hasattr(layer, 'dgamma'):
                 if bn_idx >= len(self.v_gamma):
-                    self.v_gamma.append(np.zeros_like(layer.gamma))
-                    self.v_beta_bn.append(np.zeros_like(layer.beta))
+                    self.v_gamma.append(zeros_like(layer.gamma))
+                    self.v_beta_bn.append(zeros_like(layer.beta))
 
                 self.v_gamma[bn_idx] = self.momentum * self.v_gamma[bn_idx] - self.learning_rate * layer.dgamma
                 self.v_beta_bn[bn_idx] = self.momentum * self.v_beta_bn[bn_idx] - self.learning_rate * layer.dbeta

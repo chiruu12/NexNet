@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, argmax, max, mean, zeros
 
 
 class MaxPool2D:
@@ -47,8 +47,8 @@ class MaxPool2D:
         out_h = (h - ph) // sh + 1
         out_w = (w - pw) // sw + 1
         
-        self.output = np.zeros((batch_size, channels, out_h, out_w))
-        self.max_indices = np.zeros((batch_size, channels, out_h, out_w, 2), dtype=int)
+        self.output = zeros((batch_size, channels, out_h, out_w))
+        self.max_indices = zeros((batch_size, channels, out_h, out_w, 2), dtype=int)
         
         for i in range(out_h):
             for j in range(out_w):
@@ -60,7 +60,7 @@ class MaxPool2D:
                 window = x[:, :, h_start:h_end, w_start:w_end]
                 
                 window_reshaped = window.reshape(batch_size, channels, -1)
-                max_idx = np.argmax(window_reshaped, axis=2)
+                max_idx = argmax(window_reshaped, axis=2)
                 
                 max_h = max_idx // pw
                 max_w = max_idx % pw
@@ -68,7 +68,7 @@ class MaxPool2D:
                 self.max_indices[:, :, i, j, 0] = h_start + max_h
                 self.max_indices[:, :, i, j, 1] = w_start + max_w
                 
-                self.output[:, :, i, j] = np.max(window_reshaped, axis=2)
+                self.output[:, :, i, j] = max(window_reshaped, axis=2)
                 
         return self.output
     
@@ -83,7 +83,7 @@ class MaxPool2D:
             Gradient with respect to the input.
         """
         batch_size, channels, out_h, out_w = gradient_output.shape
-        dx = np.zeros(self.input_shape)
+        dx = zeros(self.input_shape)
         
         for b in range(batch_size):
             for c in range(channels):
@@ -142,7 +142,7 @@ class AvgPool2D:
         out_h = (h - ph) // sh + 1
         out_w = (w - pw) // sw + 1
         
-        self.output = np.zeros((batch_size, channels, out_h, out_w))
+        self.output = zeros((batch_size, channels, out_h, out_w))
         
         for i in range(out_h):
             for j in range(out_w):
@@ -152,7 +152,7 @@ class AvgPool2D:
                 w_end = w_start + pw
                 
                 window = x[:, :, h_start:h_end, w_start:w_end]
-                self.output[:, :, i, j] = np.mean(window, axis=(2, 3))
+                self.output[:, :, i, j] = mean(window, axis=(2, 3))
                 
         return self.output
     
@@ -170,7 +170,7 @@ class AvgPool2D:
         ph, pw = self.pool_size
         sh, sw = self.stride
         
-        dx = np.zeros(self.input_shape)
+        dx = zeros(self.input_shape)
         pool_area = ph * pw
         
         for i in range(out_h):
@@ -180,7 +180,7 @@ class AvgPool2D:
                 w_start = j * sw
                 w_end = w_start + pw
                 
-                grad = gradient_output[:, :, i, j][:, :, np.newaxis, np.newaxis]
+                grad = gradient_output[:, :, i, j][:, :, None, None]
                 dx[:, :, h_start:h_end, w_start:w_end] += grad / pool_area
                 
         return dx

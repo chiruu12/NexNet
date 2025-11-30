@@ -1,14 +1,16 @@
-import numpy as np
+from core.backend import get_array_module, where, array
+
+
 class LeakyReLu:
-    def __init__(self,alpha=0.01):
+    def __init__(self, alpha=0.01):
         """
         Initialize the LeakyReLU activation function with a learnable alpha parameter.
 
         Args:
-            alpha_init (float): Initial value for the alpha parameter.
+            alpha (float): Value for the alpha parameter (slope for negative values).
         """
-        # Initialize alpha as a learnable parameter
-        self.alpha = np.full_like(0.01, alpha) # it is used like this because it will be used for CNN's as well
+        # Store alpha as a scalar - will be broadcast automatically
+        self.alpha = alpha
         
     def forward(self, inputs):
         """
@@ -23,12 +25,12 @@ class LeakyReLu:
         # Store the input for use in backward pass
         self.input = inputs
         # Compute the LeakyReLU activation: max(small_constant*input, input)
-        self.output = np.where(inputs > 0, inputs, self.alpha * inputs)
+        self.output = where(inputs > 0, inputs, self.alpha * inputs)
         return self.output
         
     def backward(self, gradient_output):
         """
-        Compute the backward pass (gradient) of the ReLU activation function.
+        Compute the backward pass (gradient) of the LeakyReLU activation function.
 
         Args:
             gradient_output (numpy.ndarray): The gradient of the loss with respect to the output of this layer.
@@ -36,7 +38,7 @@ class LeakyReLu:
         Returns:
             numpy.ndarray: The gradient of the loss with respect to the input of this layer.
         """
-        # Compute the gradient of the ReLU function
-        # If the input was positive, the gradient is 1; otherwise, it is the aplha contstant 
-        self.diffv = np.where(self.input > 0, gradient_output, self.alpha * gradient_output)
+        # Compute the gradient of the LeakyReLU function
+        # If the input was positive, the gradient is 1; otherwise, it is alpha
+        self.diffv = where(self.input > 0, gradient_output, self.alpha * gradient_output)
         return self.diffv

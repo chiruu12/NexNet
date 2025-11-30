@@ -37,7 +37,6 @@ def test_fnn_classification():
     assert history['train_loss'][-1] < history['train_loss'][0], "Loss should decrease"
     
     print(f"  ✓ FNN classification - accuracy: {acc:.2%}")
-    return True
 
 
 def test_sequential_regression():
@@ -68,7 +67,6 @@ def test_sequential_regression():
     assert mse < 1.0, f"MSE should be < 1.0, got {mse}"
     
     print(f"  ✓ Sequential regression - MSE: {mse:.4f}")
-    return True
 
 
 def test_cnn_image():
@@ -99,8 +97,8 @@ def test_cnn_image():
     
     loss, acc = model.evaluate(X_test, y_test)
     
+    assert acc >= 0, "Accuracy should be non-negative"
     print(f"  ✓ CNN image classification - accuracy: {acc:.2%}")
-    return True
 
 
 def test_rnn_sequence():
@@ -127,8 +125,8 @@ def test_rnn_sequence():
     
     loss, acc = model.evaluate(X_test, y_test)
     
+    assert acc >= 0, "Accuracy should be non-negative"
     print(f"  ✓ RNN sequence classification - accuracy: {acc:.2%}")
-    return True
 
 
 def test_dataloader():
@@ -151,8 +149,8 @@ def test_dataloader():
     batches_shuffle = list(loader_shuffle)
     X_first_shuffle = batches_shuffle[0][0]
     
+    assert len(batches_shuffle) == 10, "Shuffled loader should also have 10 batches"
     print(f"  ✓ DataLoader functionality")
-    return True
 
 
 def test_training_with_validation():
@@ -186,7 +184,6 @@ def test_training_with_validation():
     assert len(history['val_loss']) == 5, "Should have 5 epochs of val_loss"
     
     print(f"  ✓ Training with validation")
-    return True
 
 
 def test_gradient_clipping_integration():
@@ -216,7 +213,6 @@ def test_gradient_clipping_integration():
     assert not np.isnan(history['train_loss'][-1]), "Training should not produce NaN"
     
     print(f"  ✓ Gradient clipping integration")
-    return True
 
 
 def run_integration_tests():

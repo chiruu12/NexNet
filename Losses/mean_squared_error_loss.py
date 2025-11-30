@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, mean
 
 
 class MSE:
@@ -27,7 +27,7 @@ class MSE:
         """
         self.predictions = predictions
         self.targets = targets
-        self.loss = np.mean((predictions - targets) ** 2)
+        self.loss = mean((predictions - targets) ** 2)
         return self.loss
 
     def backward(self):

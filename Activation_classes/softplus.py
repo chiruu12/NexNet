@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, exp, log
 from .sigmoid import Sigmoid
 class Softplus:
     def __init__(self):
@@ -19,7 +19,7 @@ class Softplus:
         """
         # Compute the Softplus activation
         self.input = inputs
-        self.output = np.log(1 + np.exp(inputs))
+        self.output = log(1 + exp(inputs))
         return self.output
 
     def backward(self, gradient_output):

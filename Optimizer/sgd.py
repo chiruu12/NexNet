@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module
 
 
 class SGD:
@@ -7,6 +7,8 @@ class SGD:
     
     Updates parameters using the simple gradient descent rule:
     param = param - learning_rate * gradient
+    
+    Supports both NumPy and CuPy arrays transparently.
     """
     
     def __init__(self, learning_rate=0.01):

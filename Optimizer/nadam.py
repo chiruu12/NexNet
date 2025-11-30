@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, sqrt, zeros_like
 
 
 class NAdam:
@@ -47,10 +47,10 @@ class NAdam:
         for layer in layers:
             if hasattr(layer, 'W'):
                 if linear_idx >= len(self.m_W):
-                    self.m_W.append(np.zeros_like(layer.W))
-                    self.m_b.append(np.zeros_like(layer.b))
-                    self.v_W.append(np.zeros_like(layer.W))
-                    self.v_b.append(np.zeros_like(layer.b))
+                    self.m_W.append(zeros_like(layer.W))
+                    self.m_b.append(zeros_like(layer.b))
+                    self.v_W.append(zeros_like(layer.W))
+                    self.v_b.append(zeros_like(layer.b))
 
                 self.m_W[linear_idx] = self.beta1 * self.m_W[linear_idx] + (1 - self.beta1) * layer.dW
                 self.m_b[linear_idx] = self.beta1 * self.m_b[linear_idx] + (1 - self.beta1) * layer.db
@@ -62,16 +62,16 @@ class NAdam:
                 v_W_hat = self.v_W[linear_idx] / (1 - self.beta2 ** self.t)
                 v_b_hat = self.v_b[linear_idx] / (1 - self.beta2 ** self.t)
 
-                layer.W -= self.learning_rate * (self.beta1 * m_W_hat + (1 - self.beta1) * layer.dW / (1 - self.beta1 ** self.t)) / (np.sqrt(v_W_hat) + self.epsilon)
-                layer.b -= self.learning_rate * (self.beta1 * m_b_hat + (1 - self.beta1) * layer.db / (1 - self.beta1 ** self.t)) / (np.sqrt(v_b_hat) + self.epsilon)
+                layer.W -= self.learning_rate * (self.beta1 * m_W_hat + (1 - self.beta1) * layer.dW / (1 - self.beta1 ** self.t)) / (sqrt(v_W_hat) + self.epsilon)
+                layer.b -= self.learning_rate * (self.beta1 * m_b_hat + (1 - self.beta1) * layer.db / (1 - self.beta1 ** self.t)) / (sqrt(v_b_hat) + self.epsilon)
                 linear_idx += 1
                 
             elif hasattr(layer, 'gamma') and hasattr(layer, 'dgamma'):
                 if bn_idx >= len(self.m_gamma):
-                    self.m_gamma.append(np.zeros_like(layer.gamma))
-                    self.m_beta_bn.append(np.zeros_like(layer.beta))
-                    self.v_gamma.append(np.zeros_like(layer.gamma))
-                    self.v_beta_bn.append(np.zeros_like(layer.beta))
+                    self.m_gamma.append(zeros_like(layer.gamma))
+                    self.m_beta_bn.append(zeros_like(layer.beta))
+                    self.v_gamma.append(zeros_like(layer.gamma))
+                    self.v_beta_bn.append(zeros_like(layer.beta))
 
                 self.m_gamma[bn_idx] = self.beta1 * self.m_gamma[bn_idx] + (1 - self.beta1) * layer.dgamma
                 self.m_beta_bn[bn_idx] = self.beta1 * self.m_beta_bn[bn_idx] + (1 - self.beta1) * layer.dbeta
@@ -83,6 +83,6 @@ class NAdam:
                 v_gamma_hat = self.v_gamma[bn_idx] / (1 - self.beta2 ** self.t)
                 v_beta_hat = self.v_beta_bn[bn_idx] / (1 - self.beta2 ** self.t)
 
-                layer.gamma -= self.learning_rate * (self.beta1 * m_gamma_hat + (1 - self.beta1) * layer.dgamma / (1 - self.beta1 ** self.t)) / (np.sqrt(v_gamma_hat) + self.epsilon)
-                layer.beta -= self.learning_rate * (self.beta1 * m_beta_hat + (1 - self.beta1) * layer.dbeta / (1 - self.beta1 ** self.t)) / (np.sqrt(v_beta_hat) + self.epsilon)
+                layer.gamma -= self.learning_rate * (self.beta1 * m_gamma_hat + (1 - self.beta1) * layer.dgamma / (1 - self.beta1 ** self.t)) / (sqrt(v_gamma_hat) + self.epsilon)
+                layer.beta -= self.learning_rate * (self.beta1 * m_beta_hat + (1 - self.beta1) * layer.dbeta / (1 - self.beta1 ** self.t)) / (sqrt(v_beta_hat) + self.epsilon)
                 bn_idx += 1

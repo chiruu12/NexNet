@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, abs, mean, sign, where
 
 
 class HuberLoss:
@@ -36,12 +36,12 @@ class HuberLoss:
         self.targets = targets
         self.error = self.predictions - self.targets
         
-        abs_error = np.abs(self.error)
+        abs_error = abs(self.error)
         quadratic = 0.5 * self.error ** 2
         linear = self.delta * (abs_error - 0.5 * self.delta)
         
-        loss = np.where(abs_error <= self.delta, quadratic, linear)
-        return np.mean(loss)
+        loss = where(abs_error <= self.delta, quadratic, linear)
+        return mean(loss)
 
     def backward(self):
         """
@@ -50,12 +50,12 @@ class HuberLoss:
         Returns:
             Gradient of the loss with respect to the predictions.
         """
-        abs_error = np.abs(self.error)
+        abs_error = abs(self.error)
         batch_size = self.targets.size
         
-        grad = np.where(
+        grad = where(
             abs_error <= self.delta,
             self.error / batch_size,
-            self.delta * np.sign(self.error) / batch_size
+            self.delta * sign(self.error) / batch_size
         )
         return grad

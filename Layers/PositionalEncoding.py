@@ -1,4 +1,7 @@
-import numpy as np
+from core.backend import (
+    get_array_module, zeros, zeros_like, random_randn, sin, cos, exp, log, 
+    arange, sum as xp_sum, random_rand
+)
 
 
 class SinusoidalPositionalEncoding:
@@ -11,6 +14,8 @@ class SinusoidalPositionalEncoding:
     
     PE(pos, 2i) = sin(pos / 10000^(2i/d_model))
     PE(pos, 2i+1) = cos(pos / 10000^(2i/d_model))
+    
+    Supports both NumPy and CuPy backends transparently.
     """
     
     def __init__(self, d_model, max_seq_length=5000, dropout_rate=0.1):
@@ -31,14 +36,14 @@ class SinusoidalPositionalEncoding:
         
     def _create_positional_encoding(self):
         """Create the positional encoding matrix."""
-        pe = np.zeros((self.max_seq_length, self.d_model))
+        pe = zeros((self.max_seq_length, self.d_model))
         
-        position = np.arange(self.max_seq_length)[:, np.newaxis]
+        position = arange(self.max_seq_length)[:, None]
         
-        div_term = np.exp(np.arange(0, self.d_model, 2) * -(np.log(10000.0) / self.d_model))
+        div_term = exp(arange(0, self.d_model, 2) * -(log(10000.0) / self.d_model))
         
-        pe[:, 0::2] = np.sin(position * div_term)
-        pe[:, 1::2] = np.cos(position * div_term)
+        pe[:, 0::2] = sin(position * div_term)
+        pe[:, 1::2] = cos(position * div_term)
         
         return pe
     
@@ -52,13 +57,14 @@ class SinusoidalPositionalEncoding:
         Returns:
             Input with positional encoding added.
         """
+        xp = get_array_module(x)
         self.input = x
         seq_length = x.shape[1]
         
         self.output = x + self.pe[:seq_length]
         
         if self.training and self.dropout_rate > 0:
-            self.dropout_mask = (np.random.rand(*self.output.shape) > self.dropout_rate).astype(np.float64)
+            self.dropout_mask = (random_rand(*self.output.shape) > self.dropout_rate).astype(xp.float64)
             self.output = self.output * self.dropout_mask / (1 - self.dropout_rate)
             
         return self.output
@@ -92,6 +98,8 @@ class LearnedPositionalEncoding:
     
     Uses learnable position embeddings instead of fixed sinusoidal patterns.
     This is the approach used in GPT and BERT models.
+    
+    Supports both NumPy and CuPy backends transparently.
     """
     
     def __init__(self, d_model, max_seq_length=512, dropout_rate=0.1):
@@ -108,8 +116,8 @@ class LearnedPositionalEncoding:
         self.dropout_rate = dropout_rate
         self.training = True
         
-        self.pe = np.random.randn(max_seq_length, d_model) * 0.02
-        self.dpe = np.zeros_like(self.pe)
+        self.pe = random_randn(max_seq_length, d_model) * 0.02
+        self.dpe = zeros_like(self.pe)
         
     def forward(self, x):
         """
@@ -121,13 +129,14 @@ class LearnedPositionalEncoding:
         Returns:
             Input with positional encoding added.
         """
+        xp = get_array_module(x)
         self.input = x
         self.seq_length = x.shape[1]
         
         self.output = x + self.pe[:self.seq_length]
         
         if self.training and self.dropout_rate > 0:
-            self.dropout_mask = (np.random.rand(*self.output.shape) > self.dropout_rate).astype(np.float64)
+            self.dropout_mask = (random_rand(*self.output.shape) > self.dropout_rate).astype(xp.float64)
             self.output = self.output * self.dropout_mask / (1 - self.dropout_rate)
             
         return self.output
@@ -145,8 +154,8 @@ class LearnedPositionalEncoding:
         if self.training and self.dropout_rate > 0:
             gradient_output = gradient_output * self.dropout_mask / (1 - self.dropout_rate)
             
-        self.dpe = np.zeros_like(self.pe)
-        self.dpe[:self.seq_length] = np.sum(gradient_output, axis=0)
+        self.dpe = zeros_like(self.pe)
+        self.dpe[:self.seq_length] = xp_sum(gradient_output, axis=0)
         
         return gradient_output
     

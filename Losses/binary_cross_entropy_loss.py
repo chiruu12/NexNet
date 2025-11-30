@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, clip, log, sum
 
 class BinaryCrossEntropyLoss:
     """
@@ -29,13 +29,13 @@ class BinaryCrossEntropyLoss:
         Returns:
             The computed binary cross-entropy loss (scalar).
         """
-        self.predictions = np.clip(predictions, self.epsilon, 1 - self.epsilon)
+        self.predictions = clip(predictions, self.epsilon, 1 - self.epsilon)
         self.targets = targets
         
         batch_size = targets.shape[0]
-        self.loss = -np.sum(
-            targets * np.log(self.predictions) + 
-            (1 - targets) * np.log(1 - self.predictions)
+        self.loss = -sum(
+            targets * log(self.predictions) + 
+            (1 - targets) * log(1 - self.predictions)
         ) / batch_size
         return self.loss
 

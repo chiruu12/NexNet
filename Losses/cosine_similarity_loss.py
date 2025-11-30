@@ -1,4 +1,4 @@
-import numpy as np
+from core.backend import get_array_module, mean, sum, norm
 
 
 class CosineSimilarityLoss:
@@ -38,12 +38,12 @@ class CosineSimilarityLoss:
         self.predictions = predictions
         self.targets = targets
         
-        self.dot = np.sum(self.predictions * self.targets, axis=1)
-        self.norm_pred = np.linalg.norm(self.predictions, axis=1)
-        self.norm_tar = np.linalg.norm(self.targets, axis=1)
+        self.dot = sum(self.predictions * self.targets, axis=1)
+        self.norm_pred = norm(self.predictions, axis=1)
+        self.norm_tar = norm(self.targets, axis=1)
         
         self.simi = self.dot / (self.norm_pred * self.norm_tar + self.epsilon)
-        self.loss = 1 - np.mean(self.simi)
+        self.loss = 1 - mean(self.simi)
         return self.loss
 
     def backward(self):
@@ -55,9 +55,9 @@ class CosineSimilarityLoss:
         """
         batch_size = self.predictions.shape[0]
         
-        norm_pred_expanded = self.norm_pred[:, np.newaxis]
-        norm_tar_expanded = self.norm_tar[:, np.newaxis]
-        dot_expanded = self.dot[:, np.newaxis]
+        norm_pred_expanded = self.norm_pred[:, None]
+        norm_tar_expanded = self.norm_tar[:, None]
+        dot_expanded = self.dot[:, None]
         
         grad_pred = (
             self.targets / (norm_pred_expanded * norm_tar_expanded + self.epsilon) -
