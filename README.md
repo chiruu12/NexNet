@@ -4,212 +4,438 @@ NexNet is a neural network framework implemented from scratch using NumPy. It pr
 
 ## Features
 
-- **Activation Functions:**
-  - `ReLU`: Rectified Linear Unit, introduces non-linearity by zeroing out negative values.
-  - `Softmax`: Converts logits to probabilities, commonly used in the output layer for classification tasks.
-  - `PReLU`: Parametric ReLU, allows for a learnable slope for negative values.
-  - `Sigmoid`: Maps values to a range between 0 and 1, often used in binary classification.
-  - `Tanh`: Maps values to a range between -1 and 1, helping with centering data.
-  - `LeakyReLU`: Similar to ReLU but allows a small gradient when inputs are negative.
-  - `ELU`: Exponential Linear Unit, helps speed up learning by smoothing the activation function.
-  - `Swish`: Smooth, non-monotonic activation function that can improve model performance.
-  - `Softplus`: A smooth approximation to ReLU, improving gradient flow.
+### Model Classes
 
-- **Loss Functions:**
-  - `CrossEntropyLoss`: Measures the performance of a classification model whose output is a probability value between 0 and 1.
-  - `MeanSquaredErrorLoss`: Calculates the average of the squares of the errors between predicted and actual values.
-  - `BinaryCrossEntropyLoss`: Measures the performance of a binary classification model.
-  - `HuberLoss`: Combines the advantages of Mean Squared Error and Mean Absolute Error.
-  - `PoissonLoss`: Used for count-based prediction tasks, measures the difference between predicted and actual counts.
-  - `MeanAbsoluteErrorLoss`: Calculates the average of the absolute errors between predicted and actual values.
-  - `CosineSimilarityLoss`: Measures the cosine of the angle between two vectors to determine their similarity.
+- `FNN`: Feedforward Neural Network for classification and regression.
+- `Sequential`: PyTorch-like sequential container for building models layer by layer.
+- `CNN`: Convolutional Neural Network model for image tasks.
+- `RNNModel`: Recurrent Neural Network model for sequence tasks.
+- `Transformer`: GPT-style transformer model for language modeling.
 
-- **Optimizers:**
-  - `SGD`: Stochastic Gradient Descent, updates weights based on a subset of the data.
-  - `Momentum`: Enhances SGD by considering past gradients to accelerate convergence.
-  - `AdaGrad`: Adapts learning rates based on the frequency of updates for each parameter.
-  - `Adam`: Combines the benefits of AdaGrad and RMSProp, including adaptive learning rates.
-  - `NAdam`: Adam with Nesterov accelerated gradient, improving convergence speed.
-  - `RMSProp`: Adapts learning rates based on recent gradients to maintain a moving average of the squared gradients.
-  - `AdaDelta`: An extension of AdaGrad that reduces its aggressive, monotonically decreasing learning rate.
+### Activation Functions
 
-- **Initializers:**
-  - `Xavier`: Initializes weights to maintain the variance of activations, useful for sigmoid and tanh activations.
-  - `He`: Initializes weights to avoid issues with dying neurons in ReLU-based networks.
-  - `Random`: Simple random initialization for small networks.
-  - `Zero`: Initializes weights to zero (not typically recommended for deep networks).
+- `ReLU`: Rectified Linear Unit, introduces non-linearity by zeroing out negative values.
+- `Softmax`: Converts logits to probabilities, commonly used in the output layer for classification tasks.
+- `PReLU`: Parametric ReLU, allows for a learnable slope for negative values.
+- `Sigmoid`: Maps values to a range between 0 and 1, often used in binary classification.
+- `Tanh`: Maps values to a range between -1 and 1, helping with centering data.
+- `LeakyReLU`: Similar to ReLU but allows a small gradient when inputs are negative.
+- `ELU`: Exponential Linear Unit, helps speed up learning by smoothing the activation function.
+- `Swish`: Smooth, non-monotonic activation function that can improve model performance.
+- `Softplus`: A smooth approximation to ReLU, improving gradient flow.
+- `GELU`: Gaussian Error Linear Unit, used in GPT/BERT transformer models.
 
-- **Layers:**
-  - `Linear`: Fully connected layer that performs a linear transformation.
+### Loss Functions
+
+- `CrossEntropyLoss`: For multi-class classification with built-in softmax.
+- `BinaryCrossEntropyLoss`: For binary classification tasks.
+- `MSE`: Mean Squared Error for regression tasks.
+- `MAE`: Mean Absolute Error for regression tasks.
+- `HuberLoss`: Combines MSE and MAE advantages, robust to outliers.
+- `PoissonLoss`: For count-based prediction tasks.
+- `CosineSimilarityLoss`: Measures angular distance between vectors.
+
+### Optimizers
+
+- `SGD`: Stochastic Gradient Descent.
+- `Momentum`: SGD with momentum for faster convergence.
+- `AdaGrad`: Adaptive learning rates based on gradient history.
+- `RMSProp`: Adaptive learning rates with moving average.
+- `AdaDelta`: Extension of AdaGrad with reduced learning rate decay.
+- `Adam`: Adaptive moment estimation, combines AdaGrad and RMSProp.
+- `AdamW`: Adam with decoupled weight decay regularization.
+- `NAdam`: Adam with Nesterov momentum.
+
+### Layers
+
+#### Dense Layers
+
+- `Linear`: Fully connected layer with optional activation function.
+
+#### CNN Layers
+
+- `Conv2D`: 2D convolutional layer with configurable kernel, stride, and padding.
+- `MaxPool2D`: Max pooling layer for spatial downsampling.
+- `AvgPool2D`: Average pooling layer for smooth downsampling.
+
+#### RNN Layers
+
+- `RNN`: Vanilla recurrent neural network for sequence processing.
+- `LSTM`: Long Short-Term Memory for learning long-term dependencies.
+- `GRU`: Gated Recurrent Unit, a simpler alternative to LSTM.
+- `Embedding`: Converts integer indices to dense vectors for NLP tasks.
+
+#### Transformer Layers (GPT/BERT)
+
+- `MultiHeadAttention`: Multi-head self-attention mechanism.
+- `ScaledDotProductAttention`: Core attention operation with masking support.
+- `TransformerDecoderBlock`: GPT-style decoder block with causal masking.
+- `TransformerEncoderBlock`: BERT-style encoder block.
+- `FeedForward`: Position-wise feed-forward network.
+- `LayerNorm`: Layer normalization (different from BatchNorm).
+- `SinusoidalPositionalEncoding`: Fixed positional encoding from "Attention Is All You Need".
+- `LearnedPositionalEncoding`: Learnable position embeddings (GPT/BERT style).
+
+#### Regularization & Utility Layers
+
+- `Dropout`: Regularization layer that randomly drops units during training.
+- `BatchNorm`: Batch normalization for faster and more stable training.
+- `Flatten`: Reshapes input to 2D for transition to fully connected layers.
+
+### Regularization
+
+- `L1Regularization`: Lasso regularization for sparse weights.
+- `L2Regularization`: Ridge regularization for small weights.
+- `ElasticNetRegularization`: Combination of L1 and L2.
+- `WeightDecay`: Direct weight decay during optimization.
+- `MaxNormConstraint`: Clip weights by max norm.
+- `UnitNormConstraint`: Normalize weights to unit norm.
+
+### Gradient Utilities
+
+- `clip_grad_norm`: Clip gradient norm to prevent exploding gradients.
+- `clip_grad_value`: Clip gradient values to a range.
+
+### Initializers
+
+- `Xavier`: For sigmoid and tanh activations.
+- `He`: For ReLU-based activations.
+- `Random`: Simple random initialization.
+- `Zero`: Zero initialization.
+
+### Learning Rate Schedulers
+
+- `StepLR`: Decay learning rate by factor every N epochs.
+- `ExponentialLR`: Exponential decay every epoch.
+- `CosineAnnealingLR`: Cosine annealing schedule.
+- `ReduceLROnPlateau`: Reduce LR when metric stops improving.
+
+### Callbacks
+
+- `EarlyStopping`: Stop training when metric stops improving.
+- `ModelCheckpoint`: Save model when metric improves.
+- `History`: Record and plot training history.
+
+### Metrics
+
+- `accuracy`: Classification accuracy.
+- `precision`: Precision score with averaging options.
+- `recall`: Recall score with averaging options.
+- `f1_score`: F1 score (harmonic mean of precision and recall).
+- `confusion_matrix`: Confusion matrix for classification.
+- `mean_squared_error`: MSE metric for regression.
+- `mean_absolute_error`: MAE metric for regression.
+- `r2_score`: R-squared coefficient of determination.
+
+### Data Utilities
+
+- `DataLoader`: Batch data loading with shuffling support.
+- `train_test_split`: Split data into train and test sets.
+- `OneHotEncoder`: Encode/decode one-hot vectors.
+
+### Core Classes (PyTorch-like)
+
+- `Module`: Base class for all modules (similar to nn.Module).
+- `Parameter`: Wrapper for trainable parameters.
+- `init_weights`: Weight initialization utility function.
 
 ## Installation
 
-To use NexNet, clone the repository and change into the directory:
+Clone the repository:
 
 ```bash
 git clone https://github.com/chiruu12/NexNet.git
-import os
-os.chdir('NexNet')
+cd NexNet
+pip install -r requirements.txt
 ```
 
 ## Usage
 
 ### Importing Modules
 
-To get started with NexNet, you need to import the necessary modules:
-
 ```python
-from Models import FNN, CNN
-from Losses import CrossEntropyLoss, MeanSquaredErrorLoss, BinaryCrossEntropyLoss, HuberLoss, PoissonLoss, MeanAbsoluteErrorLoss, CosineSimilarityLoss
-from Layers import Linear
-from Activation_classes import ReLu, Softmax, PReLU, Sigmoid, Tanh, LeakyReLU, ELU, Swish, Softplus
-from utils import one_hot, Initializer
-from Optimizer import SGD, Momentum, AdaGrad, Adam, NAdam, RMSProp, AdaDelta
+from Models import FNN, Sequential, CNN, RNNModel, Transformer
+from Losses import CrossEntropyLoss, MSE, MAE, HuberLoss
+from Layers import Linear, Dropout, BatchNorm, Flatten, Conv2D, MaxPool2D, RNN, LSTM, GRU, Embedding
+from Activation_classes import ReLu, Softmax, PReLU, Sigmoid, Tanh, LeakyReLu, ELU, Swish, Softplus, GELU
+from utils import OneHotEncoder, Initializer, clip_grad_norm, L1Regularization, L2Regularization
+from Optimizer import SGD, Momentum, AdaGrad, Adam, AdamW, NAdam, RMSProp, AdaDelta
+from schedulers import StepLR, CosineAnnealingLR, ReduceLROnPlateau
+from callbacks import EarlyStopping, ModelCheckpoint, History
+from metrics import accuracy, precision, recall, f1_score, confusion_matrix
+from data import DataLoader, train_test_split
+from core import Module, Parameter, init_weights
 ```
 
-## Data Preparation
-
-Prepare your dataset by splitting it into training and testing sets and one-hot encoding the labels:
+### Data Preparation
 
 ```python
-from sklearn.model_selection import train_test_split
+from data import train_test_split
+from utils import OneHotEncoder
 
-# Example data split
-X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, test_size=0.20, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# One-hot encode the labels
-num_classes = 10  # For MNIST
-one_hot_encoder = one_hot(num_classes)
-y_train_one_hot = one_hot_encoder.convert_to_one_hot(y_train)
-y_test_one_hot = one_hot_encoder.convert_to_one_hot(y_test)
+encoder = OneHotEncoder(num_classes=10)
+y_train_encoded = encoder.encode(y_train)
+y_test_encoded = encoder.encode(y_test)
 ```
 
-## Creating and Training a Model
-
-Create and train a model using the `FNN` class:
+### Creating and Training a Model
 
 ```python
-# Create the model
-input_dim = X_train.shape[1]
-model = FNN(optimizer=AdaDelta(), loss=CrossEntropyLoss())
+from Models import FNN
+from Layers import Linear, Dropout, BatchNorm
+from Activation_classes import ReLu
+from Losses import CrossEntropyLoss
+from Optimizer import Adam
 
-# Add layers to the model
-model.add_layer(Linear(input_dim=input_dim, output_dim=128, activation=PReLU()))
-model.add_layer(Linear(input_dim=128, output_dim=128, activation=PReLU()))
-model.add_layer(Linear(input_dim=128, output_dim=32, activation=PReLU()))
-model.add_layer(Linear(32, num_classes))
+model = FNN(loss=CrossEntropyLoss(), optimizer=Adam(learning_rate=0.001))
 
-# Train the model
-model.train(X_train, y_train_one_hot, epochs=30, batch_size=64)
+model.add_layer(Linear(input_dim=784, output_dim=256, activation=ReLu()))
+model.add_layer(BatchNorm(256))
+model.add_layer(Dropout(rate=0.3))
+model.add_layer(Linear(input_dim=256, output_dim=128, activation=ReLu()))
+model.add_layer(Dropout(rate=0.3))
+model.add_layer(Linear(input_dim=128, output_dim=10))
 
-# Evaluate on test set
-accuracy = model.evaluate(X_test, y_test_one_hot)
+model.summary()
+
+history = model.train(
+    X_train, y_train_encoded,
+    epochs=30,
+    batch_size=64,
+    validation_split=0.1,
+    verbose=True
+)
+
+loss, accuracy = model.evaluate(X_test, y_test_encoded)
 ```
 
-
-## Model Saving and Loading
-
-To save and load model weights, NexNet provides functionality to persist and restore model states. This is useful for checkpointing and resuming training or for deploying models.
-
-### Saving the Model
-
-After training your model, you can save its weights to a file using the `save` method. The weights are saved in a `.npz` file format.
+### PyTorch-like Sequential Model
 
 ```python
-# Save the model weights to a file
+from Models import Sequential
+from Layers import Linear, Dropout, BatchNorm
+from Activation_classes import ReLu, Softmax
+from Losses import CrossEntropyLoss
+from Optimizer import Adam
+
+# Build model using Sequential container
+model = Sequential(
+    Linear(784, 256),
+    ReLu(),
+    BatchNorm(256),
+    Dropout(rate=0.3),
+    Linear(256, 128),
+    ReLu(),
+    Dropout(rate=0.3),
+    Linear(128, 10),
+    Softmax()
+)
+
+# Compile and train
+model.compile(optimizer=Adam(learning_rate=0.001), loss=CrossEntropyLoss())
+history = model.fit(X_train, y_train, epochs=30, batch_size=64, validation_data=(X_val, y_val))
+
+# Or build incrementally
+model = Sequential()
+model.add(Linear(784, 256))
+model.add(ReLu())
+model.add(Linear(256, 10))
+```
+
+### CNN Model (Image Classification)
+
+```python
+from Models import CNN
+from Layers import Conv2D, MaxPool2D, Flatten, Linear, Dropout
+from Activation_classes import ReLu, Softmax
+from Losses import CrossEntropyLoss
+from Optimizer import Adam
+
+# Build CNN for MNIST
+model = CNN([
+    Conv2D(in_channels=1, out_channels=32, kernel_size=3, padding=1),
+    ReLu(),
+    MaxPool2D(pool_size=2, stride=2),
+    Conv2D(in_channels=32, out_channels=64, kernel_size=3, padding=1),
+    ReLu(),
+    MaxPool2D(pool_size=2, stride=2),
+    Flatten(),
+    Linear(64 * 7 * 7, 128),
+    ReLu(),
+    Dropout(rate=0.5),
+    Linear(128, 10),
+    Softmax()
+])
+
+model.compile(optimizer=Adam(learning_rate=0.001), loss=CrossEntropyLoss())
+history = model.fit(X_train, y_train, epochs=10, batch_size=32, clip_grad_norm=1.0)
+```
+
+### RNN Model (Sequence Classification)
+
+```python
+from Models import RNNModel
+from Layers import Embedding, LSTM, Linear
+from Activation_classes import Softmax
+from Losses import CrossEntropyLoss
+from Optimizer import Adam
+
+# Build RNN for text classification
+model = RNNModel([
+    Embedding(vocab_size=10000, embed_dim=128),
+    LSTM(input_size=128, hidden_size=256, return_sequences=False),
+    Linear(256, 64),
+    ReLu(),
+    Linear(64, num_classes),
+    Softmax()
+])
+
+model.compile(optimizer=Adam(learning_rate=0.001), loss=CrossEntropyLoss())
+history = model.fit(X_train, y_train, epochs=10, batch_size=32, clip_grad_norm=1.0)
+
+# Generate sequences
+generated = model.generate(start_tokens, max_length=100, temperature=0.8)
+```
+
+### Transformer Model (Language Modeling)
+
+```python
+from Models import Transformer
+from Losses import CrossEntropyLoss
+from Optimizer import AdamW
+
+# Build GPT-style transformer
+model = Transformer(
+    vocab_size=50000,
+    d_model=256,
+    n_heads=8,
+    n_layers=6,
+    d_ff=1024,
+    max_seq_len=512,
+    dropout=0.1,
+    causal=True
+)
+
+model.compile(optimizer=AdamW(learning_rate=1e-4, weight_decay=0.01), loss=CrossEntropyLoss())
+model.summary()
+
+# Train on language modeling task
+history = model.fit(X_train, y_train, epochs=10, batch_size=16, clip_grad_norm=1.0)
+
+# Generate text
+generated = model.generate(
+    start_tokens=start_ids,
+    max_length=100,
+    temperature=0.8,
+    top_k=40,
+    top_p=0.9
+)
+```
+
+### Using Gradient Clipping
+
+```python
+from utils import clip_grad_norm, clip_grad_value
+
+# Clip during training
+history = model.fit(X_train, y_train, epochs=10, clip_grad_norm=1.0)
+
+# Or manually
+output = model.forward(X_batch)
+loss = loss_fn.forward(output, y_batch)
+grad = loss_fn.backward()
+model.backward(grad)
+
+# Clip gradients before optimizer step
+total_norm = clip_grad_norm(model.layers, max_norm=1.0)
+clip_grad_value(model.layers, clip_value=0.5)
+
+optimizer.step(model.layers)
+```
+
+### Using Regularization
+
+```python
+from utils import L1Regularization, L2Regularization, MaxNormConstraint
+
+l2_reg = L2Regularization(lambda_reg=0.001)
+max_norm = MaxNormConstraint(max_norm=3.0)
+
+for epoch in range(epochs):
+    # Forward and backward pass
+    output = model.forward(X_batch)
+    loss = loss_fn.forward(output, y_batch)
+    
+    # Add regularization loss
+    reg_loss = l2_reg.loss(model.layers)
+    total_loss = loss + reg_loss
+    
+    grad = loss_fn.backward()
+    model.backward(grad)
+    
+    # Apply regularization gradients
+    l2_reg.apply_gradients(model.layers)
+    
+    optimizer.step(model.layers)
+    
+    # Apply weight constraints
+    max_norm.apply(model.layers)
+```
+
+### Using Callbacks and Schedulers
+
+```python
+from callbacks import EarlyStopping, ModelCheckpoint
+from schedulers import ReduceLROnPlateau
+
+early_stop = EarlyStopping(patience=5, mode='min')
+checkpoint = ModelCheckpoint('best_model.npz', monitor='val_loss')
+scheduler = ReduceLROnPlateau(optimizer, patience=3, factor=0.5)
+```
+
+### Model Saving and Loading
+
+```python
 model.save('model_weights.npz')
+
+new_model = FNN(loss=CrossEntropyLoss(), optimizer=Adam())
+new_model.load('model_weights.npz')
 ```
 
+## Project Structure
 
-This will create a file named model_weights.npz containing the weights and biases of all layers in the model.
-
-### Loading the Model
-To load a previously saved model, use the load method. This will restore the weights and biases from the file into your model.
-
-```python
-# Load the model weights from a file
-model.load('model_weights.npz')
+```text
+NexNet/
+├── Activation_classes/     # Activation functions
+├── Layers/                 # Neural network layers
+├── Losses/                 # Loss functions
+├── Models/                 # Model architectures (FNN, Sequential, CNN, RNN, Transformer)
+├── Optimizer/              # Optimization algorithms
+├── callbacks/              # Training callbacks
+├── core/                   # Base classes (Module, Parameter)
+├── data/                   # Data utilities
+├── metrics/                # Evaluation metrics
+├── schedulers/             # Learning rate schedulers
+├── utils/                  # Utilities (initializers, regularization, grad_clip)
+├── implementation/         # Example implementations
+├── NLP/                    # NLP implementations
+└── requirements.txt
 ```
-Make sure the model architecture matches the one used when the weights were saved. The load method will update the weights and biases of the layers according to the saved state.
-
-
-## Future Enhancements
-
-NexNet is an evolving project with a focus on building a robust and flexible neural network library. Here are some planned enhancements and future improvements:
-
-1. **Expanded Layer Support**
-   - Additional Layers: Integrate more advanced types of layers such as dropout, batch normalization, and attention mechanisms.
-   - Custom Layer Support: Allow users to define and implement their own custom layers.
-
-2. **Optimizer Enhancements**
-   - Advanced Optimizers: Introduce more optimization algorithms such as RMSProp, AdamW, and L-BFGS.
-   - Hyperparameter Tuning: Implement automatic hyperparameter tuning capabilities for optimizers.
-
-3. **Enhanced Model Management**
-   - Checkpoint: Add functionality to save and restore model checkpoints during training.
-   - Model Serialization: Improve model saving and loading to support various formats and metadata.
-
-4. **Visualization and Monitoring**
-   - Training Progress: Incorporate tools for visualizing training progress, including loss and accuracy curves.
-   - Model Inspection: Develop utilities for inspecting and analyzing model parameters and performance.
-
-5. **Expanded Loss Functions**
-   - Additional Losses: Include more loss functions such as Hinge Loss, Triplet Loss, and custom user-defined losses.
-   - Advanced Metrics: Implement advanced evaluation metrics and performance measures.
-
-6. **Improved Documentation**
-   - Detailed Examples: Provide more comprehensive examples and tutorials for using different features and functionalities.
-   - API Documentation: Enhance the API documentation for easier navigation and understanding.
-
-7. **Performance Optimization**
-   - Efficiency Improvements: Optimize the performance of core components to handle larger datasets and more complex models.
-   - Parallel Computing: Explore options for parallel computing to accelerate training and inference.
 
 ## NLP Implementations
 
-For all the NLP-related implementations, please refer to the detailed documentation at [Readme_NLP.md](https://github.com/chiruu12/NexNet/blob/main/NLP/Readme_NLP.md).
+For NLP-related implementations (Word2Vec, GloVe, NER), see [Readme_NLP.md](https://github.com/chiruu12/NexNet/blob/main/NLP/Readme_NLP.md).
 
-## Contributions
+## Contributing
 
-Contributions to NexNet are welcome! If you have suggestions, improvements, or bug fixes, please follow these steps:
-
-1. **Fork the Repository**
-   - Create a fork of the repository on GitHub to make your changes.
-
-2. **Clone Your Fork**
-   - Clone your fork to your local machine using:
-     ```bash
-     git clone https://github.com/your-username/NexNet.git
-     ```
-
-3. **Create a Branch**
-   - Create a new branch for your changes:
-     ```bash
-     git checkout -b feature/your-feature-name
-     ```
-
-4. **Make Changes**
-   - Implement your changes or add new features.
-
-5. **Commit and Push**
-   - Commit your changes with a descriptive message:
-     ```bash
-     git add .
-     git commit -m "Add detailed description of changes"
-     ```
-   - Push your branch to your fork:
-     ```bash
-     git push origin feature/your-feature-name
-     ```
-
-6. **Create a Pull Request**
-   - Open a pull request on the original repository to propose your changes.
-
-7. **Review and Feedback**
-   - The project maintainers will review your pull request and provide feedback if necessary.
-
-Thank you for contributing to NexNet!
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit changes: `git commit -m "Add your feature"`
+4. Push to branch: `git push origin feature/your-feature`
+5. Open a Pull Request
 
 ## License
 
-NexNet is licensed under the [MIT License](LICENSE). See the [LICENSE](LICENSE) file for more details.
+NexNet is licensed under the [MIT License](LICENSE).

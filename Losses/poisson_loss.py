@@ -1,31 +1,43 @@
-import numpy as np  
+import numpy as np
+
 
 class PoissonLoss:
-    def forward(self,k,_lambda_):
-        """
-        Perform the forward pass of the Huber loss function.
+    """
+    Poisson Loss for count-based prediction tasks.
+    
+    Measures the difference between predicted rates and actual event counts
+    using the negative log-likelihood of the Poisson distribution.
+    """
+    
+    def __init__(self):
+        """Initialize the Poisson Loss."""
+        self.predictions = None
+        self.targets = None
 
+    def forward(self, targets, predictions):
+        """
+        Compute the forward pass of the Poisson Loss.
+        
         Args:
-            k : no. of events 
-            _lambda_ : Average rate of events 
-            # we have to write lambda as _lambda_ because of the lambda function!!
-
+            targets: True event counts of shape (batch_size,).
+            predictions: Predicted rates (lambda) of shape (batch_size,).
+        
         Returns:
-            The computed Poisson loss.
+            The computed Poisson loss (scalar).
         """
-        self._lambda_=_lambda_
-        self.k=k
-        # formula for probability is  = (lambda^k * e^(-lambda)) / k! 
-        self.prob= ( _lambda_**self.k )*np.exp(-_lambda_)/np.maths.factorial(self.k)
-        # loss is nothing but -log of the probability 
-        self.loss=-np.log(self.prob)
+        self.predictions = np.maximum(predictions, 1e-8)
+        self.targets = targets
+        
+        self.loss = np.mean(self.predictions - targets * np.log(self.predictions))
         return self.loss
+
     def backward(self):
         """
-        Compute the gradient of the Poisson loss with respect to lambda.
-
+        Compute the backward pass of the Poisson Loss.
+        
         Returns:
-            Gradient of the Poisson loss with respect to lambda.
+            Gradient of the loss with respect to the predictions.
         """
-        grad= -(self.k/self._lambda - 1)
+        batch_size = self.targets.shape[0]
+        grad = (1 - self.targets / self.predictions) / batch_size
         return grad

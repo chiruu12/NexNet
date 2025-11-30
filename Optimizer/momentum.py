@@ -1,40 +1,60 @@
 import numpy as np
+
+
 class Momentum:
+    """
+    SGD with Momentum optimizer.
+    
+    Accelerates SGD in the relevant direction and dampens oscillations
+    by accumulating a velocity vector in directions of persistent reduction.
+    """
+    
     def __init__(self, learning_rate=0.01, momentum=0.9):
         """
         Initialize the Momentum optimizer.
 
         Args:
-            learning_rate : Learning rate for the optimizer.
-            momentum : Momentum factor.
+            learning_rate: Learning rate for the optimizer.
+            momentum: Momentum factor (typically 0.9).
         """
         self.learning_rate = learning_rate
         self.momentum = momentum
         self.v_W = []
         self.v_b = []
+        self.v_gamma = []
+        self.v_beta_bn = []
 
     def step(self, layers):
         """
-        Perform a single optimization step with momentum by updating the weights and biases of the given layers.
+        Perform a single optimization step with momentum.
 
         Args:
-            layers  : List of layers in the network. Each layer should have attributes or if they dont we wont calculate for 
-            `W` (weights), `b` (biases),  `dW` (gradient of weights), and `db` (gradient of biases).
+            layers: List of layers in the network.
         """
-        i=0
+        linear_idx = 0
+        bn_idx = 0
+        
         for layer in layers:
-            if hasattr(layer, 'W'):
-                i+=1
-                # Initialize velocity if it doesn't exist
-                #basically the first iteration 
-                if i > len(self.v_W):
+            if hasattr(layer, 'W') and hasattr(layer, 'dW'):
+                if linear_idx >= len(self.v_W):
                     self.v_W.append(np.zeros_like(layer.W))
                     self.v_b.append(np.zeros_like(layer.b))
 
-                # Update velocity for weights and biases
-                self.v_W[i-1] = self.momentum *self.v_W[i-1] - self.learning_rate *layer.dW
-                self.v_b[i-1] = self.momentum *self.v_b[i-1] - self.learning_rate *layer.db
+                self.v_W[linear_idx] = self.momentum * self.v_W[linear_idx] - self.learning_rate * layer.dW
+                self.v_b[linear_idx] = self.momentum * self.v_b[linear_idx] - self.learning_rate * layer.db
 
-                # Update weights and biases using the velocity
-                layer.W += self.v_W[i-1]
-                layer.b += self.v_b[i-1]
+                layer.W += self.v_W[linear_idx]
+                layer.b += self.v_b[linear_idx]
+                linear_idx += 1
+                
+            elif hasattr(layer, 'gamma') and hasattr(layer, 'dgamma'):
+                if bn_idx >= len(self.v_gamma):
+                    self.v_gamma.append(np.zeros_like(layer.gamma))
+                    self.v_beta_bn.append(np.zeros_like(layer.beta))
+
+                self.v_gamma[bn_idx] = self.momentum * self.v_gamma[bn_idx] - self.learning_rate * layer.dgamma
+                self.v_beta_bn[bn_idx] = self.momentum * self.v_beta_bn[bn_idx] - self.learning_rate * layer.dbeta
+
+                layer.gamma += self.v_gamma[bn_idx]
+                layer.beta += self.v_beta_bn[bn_idx]
+                bn_idx += 1

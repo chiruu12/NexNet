@@ -1,30 +1,42 @@
-import numpy as np                          
+import numpy as np
+
+
 class MSE:
-    def forward(self, predictions, targets):
+    """
+    Mean Squared Error (L2 Loss) for regression tasks.
+    
+    Calculates the average of squared differences between predictions and targets.
+    Penalizes larger errors more heavily than MAE.
+    """
+    
+    def __init__(self):
+        """Initialize the MSE Loss."""
+        self.predictions = None
+        self.targets = None
+
+    def forward(self, targets, predictions):
         """
-        Perform the forward pass of the Mean Squared error Loss function.
-
+        Compute the forward pass of the Mean Squared Error Loss.
+        
         Args:
-            targets : True labels, one-hot encoded 
-            predictions : Predicted probabilities 
-
+            targets: True values of shape (batch_size,) or (batch_size, features).
+            predictions: Predicted values of same shape as targets.
+        
         Returns:
-            The computed cross-entropy loss.
+            The computed MSE loss (scalar).
         """
         self.predictions = predictions
         self.targets = targets
-        # formulae is summation of square of all the differences n then divided by number of differences (difference btw prediction and target value)
-        # i.e it is = sum(( difference ) ** 2 )/number of differences 
         self.loss = np.mean((predictions - targets) ** 2)
         return self.loss
 
     def backward(self):
         """
-        Perform the backward pass of the Mean Squared error Loss function.
-
+        Compute the backward pass of the Mean Squared Error Loss.
+        
         Returns:
-            Gradient of the loss with respect to the predictions
+            Gradient of the loss with respect to the predictions.
         """
-        # Gradients for MSE
-        grad_input = 2*(self.predictions - self.targets)/self.targets.size
-        return grad_input
+        batch_size = self.targets.size
+        grad = 2 * (self.predictions - self.targets) / batch_size
+        return grad

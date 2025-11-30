@@ -1,32 +1,69 @@
 import numpy as np
-class one_hot:
-    def __init__(self,num_classes):
-        
-        self.num_classes=num_classes
-        
-    def one_hot_to_label(one_hot_matrix):
+
+
+class OneHotEncoder:
+    """
+    One-Hot Encoder for converting between class labels and one-hot vectors.
+    """
+    
+    def __init__(self, num_classes):
         """
-        Convert a one-hot encoded matrix to class labels.
-
+        Initialize the OneHotEncoder.
+        
         Args:
-            y_one_hot : One-hot encoded array of shape (num_samples, num_classes).
+            num_classes: Total number of classes.
+        """
+        self.num_classes = num_classes
 
+    def encode(self, labels):
+        """
+        Convert integer labels to one-hot encoded format.
+        
+        Args:
+            labels: 1-D array of integer class labels of shape (num_samples,).
+        
+        Returns:
+            One-hot encoded array of shape (num_samples, num_classes).
+        """
+        result = np.zeros((len(labels), self.num_classes), dtype=np.float32)
+        result[np.arange(len(labels)), labels] = 1
+        return result
+
+    def decode(self, one_hot_matrix):
+        """
+        Convert one-hot encoded matrix back to class labels.
+        
+        Args:
+            one_hot_matrix: One-hot encoded array of shape (num_samples, num_classes).
+        
         Returns:
             Array of class labels of shape (num_samples,).
         """
         return np.argmax(one_hot_matrix, axis=1)
 
-    def convert_to_one_hot(self,vector):
+    def convert_to_one_hot(self, vector):
         """
-        Convert a vector of integer class labels to one-hot encoded format.
-
+        Alias for encode method for backward compatibility.
+        
         Args:
-            vector : 1-D array of integer class labels, shape (num_samples,).
-            num_classes : Number of classes. If None, it is set to the maximum value in the vector + 1.
-
+            vector: 1-D array of integer class labels.
+        
         Returns:
-            2-D array of one-hot encoded labels, shape (num_samples, num_classes).
+            One-hot encoded array.
         """
-        result = np.zeros((len(vector), self.num_classes), dtype=int)
-        result[np.arange(len(vector)), vector] = 1
-        return result
+        return self.encode(vector)
+
+    def one_hot_to_label(self, one_hot_matrix):
+        """
+        Alias for decode method for backward compatibility.
+        
+        Args:
+            one_hot_matrix: One-hot encoded array.
+        
+        Returns:
+            Array of class labels.
+        """
+        return self.decode(one_hot_matrix)
+
+
+one_hot = OneHotEncoder

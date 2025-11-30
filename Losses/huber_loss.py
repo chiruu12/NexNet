@@ -1,41 +1,61 @@
 import numpy as np
-class HuberLoss:
-    def __init__(self,delta=1.0):
-        """
-        Initialize the class.
 
+
+class HuberLoss:
+    """
+    Huber Loss (Smooth L1 Loss) for regression tasks.
+    
+    Combines the advantages of MSE and MAE: quadratic for small errors,
+    linear for large errors, making it robust to outliers.
+    """
+    
+    def __init__(self, delta=1.0):
+        """
+        Initialize the Huber Loss.
+        
         Args:
-            delta : The threshold where the loss transitions from quadratic to linear.
+            delta: Threshold where loss transitions from quadratic to linear.
         """
         self.delta = delta
+        self.predictions = None
+        self.targets = None
+        self.error = None
 
-    def forward(self, predictions,targets):
+    def forward(self, targets, predictions):
         """
-        Perform the forward pass of the Huber loss function.
-
+        Compute the forward pass of the Huber Loss.
+        
         Args:
-            predictions : Predicted values
-            targets : True values 
-
+            targets: True values of shape (batch_size,) or (batch_size, features).
+            predictions: Predicted values of same shape as targets.
+        
         Returns:
-            The computed Huber loss.
+            The computed Huber loss (scalar).
         """
         self.predictions = predictions
         self.targets = targets
         self.error = self.predictions - self.targets
-
-        # calculating quadratic and linear part one of them will be returned as output. which one we are going to 
-        # return depends on the value of delta we are using mse and mae in some sense here 
-        quadratic_part = 0.5*(self.error ** 2)
-        linear_part = self.delta*(np.abs(self.error) - 0.5*self.delta)
-        return np.mean(quadratic_part) if np.abs(self.error) <= self.delta else linear_part
+        
+        abs_error = np.abs(self.error)
+        quadratic = 0.5 * self.error ** 2
+        linear = self.delta * (abs_error - 0.5 * self.delta)
+        
+        loss = np.where(abs_error <= self.delta, quadratic, linear)
+        return np.mean(loss)
 
     def backward(self):
         """
-        Perform the backward pass of the Huber loss function.
-
+        Compute the backward pass of the Huber Loss.
+        
         Returns:
-            Gradient of the loss with respect to the predictions
+            Gradient of the loss with respect to the predictions.
         """
-        # Gradient for Huber loss
-        return   self.error/self.targets.size if np.abs(self.error) <= self.delta else self.delta * np.sign(self.error)/self.targets.size
+        abs_error = np.abs(self.error)
+        batch_size = self.targets.size
+        
+        grad = np.where(
+            abs_error <= self.delta,
+            self.error / batch_size,
+            self.delta * np.sign(self.error) / batch_size
+        )
+        return grad

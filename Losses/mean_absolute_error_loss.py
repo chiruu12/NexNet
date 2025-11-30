@@ -1,29 +1,42 @@
 import numpy as np
+
+
 class MAE:
-    def forward(self, predictions,targets):
+    """
+    Mean Absolute Error (L1 Loss) for regression tasks.
+    
+    Calculates the average of absolute differences between predictions and targets.
+    More robust to outliers than MSE.
+    """
+    
+    def __init__(self):
+        """Initialize the MAE Loss."""
+        self.predictions = None
+        self.targets = None
+
+    def forward(self, targets, predictions):
         """
-        Perform the forward pass of the Mean Absolute Error (MAE) Loss function.
-
+        Compute the forward pass of the Mean Absolute Error Loss.
+        
         Args:
-            targets : True labels
-            predictions : Predicted values
-
+            targets: True values of shape (batch_size,) or (batch_size, features).
+            predictions: Predicted values of same shape as targets.
+        
         Returns:
-            The computed MAE loss.
+            The computed MAE loss (scalar).
         """
         self.predictions = predictions
         self.targets = targets
-        # formulae is summation of mod of all the differences n then divided by number of differences (difference btw prediction and target value)
-        # i.e it is = sum(abs( difference ) )/number of differences 
         self.loss = np.mean(np.abs(predictions - targets))
         return self.loss
 
     def backward(self):
         """
-        Perform the backward pass of the Mean Absolute Error (MAE) Loss function.
-
+        Compute the backward pass of the Mean Absolute Error Loss.
+        
         Returns:
-            Gradient of the loss with respect to the predictions
+            Gradient of the loss with respect to the predictions.
         """
-        # Gradient for MAE loss is either +1 or -1 depending on the sign of the error
-        return 1/self.targets.size if self.predictions > self.targets else -1/self.targets.size
+        batch_size = self.targets.size
+        grad = np.sign(self.predictions - self.targets) / batch_size
+        return grad

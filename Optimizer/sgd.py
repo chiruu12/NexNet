@@ -1,26 +1,34 @@
 import numpy as np
+
+
 class SGD:
+    """
+    Stochastic Gradient Descent optimizer.
+    
+    Updates parameters using the simple gradient descent rule:
+    param = param - learning_rate * gradient
+    """
+    
     def __init__(self, learning_rate=0.01):
         """
-        Initialize the Stochastic Gradient Descent (SGD) optimizer.
-
+        Initialize the SGD optimizer.
+        
         Args:
-            learning_rate (float): Learning rate for the optimizer.
+            learning_rate: Learning rate for parameter updates.
         """
         self.learning_rate = learning_rate
 
     def step(self, layers):
         """
-        Perform a single optimization step by updating the weights and biases of the given layers.
-
+        Perform a single optimization step.
+        
         Args:
-            layers  : List of layers in the network. Each layer should have attributes or if they dont we wont calculate for 
-            `W` (weights), `b` (biases), `dW` (gradient of weights), and `db` (gradient of biases).
-
-        This method iterates over each layer and updates its weights and biases using the computed gradients.
+            layers: List of layers with parameters to update.
         """
         for layer in layers:
-            if hasattr(layer, 'W'): # going to check if the layer is having a W attribute or we can say it is a linear layer or not!
-                # Updates weights and biases for layers with weight and bias attributes
+            if hasattr(layer, 'W') and layer.dW is not None:
                 layer.W -= self.learning_rate * layer.dW
                 layer.b -= self.learning_rate * layer.db
+            if hasattr(layer, 'gamma') and hasattr(layer, 'dgamma') and layer.dgamma is not None:
+                layer.gamma -= self.learning_rate * layer.dgamma
+                layer.beta -= self.learning_rate * layer.dbeta

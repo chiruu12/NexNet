@@ -4,4 +4,5 @@ from .adagrad import AdaGrad
 from .rmsprop import RMSProp
 from .adadelta import AdaDelta
 from .adam import Adam
+from .adamw import AdamW
 from .nadam import NAdam

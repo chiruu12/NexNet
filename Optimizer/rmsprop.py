@@ -1,40 +1,63 @@
-import numpy as np 
+import numpy as np
+
+
 class RMSProp:
-    def __init__(self, learning_rate=0.01, Beta=0.9, epsilon=1e-7):
+    """
+    RMSProp optimizer.
+    
+    Maintains a moving average of squared gradients to normalize
+    the gradient, preventing the learning rate from becoming too
+    large or too small.
+    """
+    
+    def __init__(self, learning_rate=0.01, beta=0.9, epsilon=1e-7):
         """
         Initialize the RMSProp optimizer.
 
         Args:
-            learning_rate : Learning rate for the optimizer.
-            Beta : Decay factor for the running average of squared gradients.
-            epsilon : Small constant to prevent division by zero and ensure numerical stability.
+            learning_rate: Learning rate for the optimizer.
+            beta: Decay factor for the running average of squared gradients.
+            epsilon: Small constant to prevent division by zero.
         """
         self.learning_rate = learning_rate
-        self.Beta = Beta
+        self.beta = beta
         self.epsilon = epsilon
-        self.v_W = []  # Running average of squared gradients for weights
-        self.v_b = []  # Running average of squared gradients for biases
-    
+        self.v_W = []
+        self.v_b = []
+        self.v_gamma = []
+        self.v_beta_bn = []
+
     def step(self, layers):
         """
         Perform a single optimization step with RMSProp.
 
         Args:
-            layers: List of layers in the network. Each layer should have attributes `W` (weights), `b` (biases),
-                    `dW` (gradient of weights), and `db` (gradient of biases).
+            layers: List of layers in the network.
         """
-        i=0
+        linear_idx = 0
+        bn_idx = 0
+        
         for layer in layers:
             if hasattr(layer, 'W'):
-                # Initialize running averages if they don't exist
-                if i > len(self.v_W):
-                    self.v_W.append(np.zeros_like(layer.W))  # Squared gradients for weights
-                    self.v_b.append(np.zeros_like(layer.b))  # Squared gradients for biases
+                if linear_idx >= len(self.v_W):
+                    self.v_W.append(np.zeros_like(layer.W))
+                    self.v_b.append(np.zeros_like(layer.b))
 
-                # Update running average of squared gradients
-                self.v_W[i-1] = self.Beta * self.v_W[i-1] + (1 - self.Beta) * layer.dW ** 2
-                self.v_b[i-1] = self.Beta * self.v_b[i-1] + (1 - self.Beta) * layer.db ** 2
+                self.v_W[linear_idx] = self.beta * self.v_W[linear_idx] + (1 - self.beta) * layer.dW ** 2
+                self.v_b[linear_idx] = self.beta * self.v_b[linear_idx] + (1 - self.beta) * layer.db ** 2
 
-                # Update weights and biases using the running average of squared gradients
-                layer.W -= self.learning_rate * layer.dW / np.sqrt(self.v_W[i-1] + self.epsilon)
-                layer.b -= self.learning_rate * layer.db / np.sqrt(self.v_b[i-1] + self.epsilon)
+                layer.W -= self.learning_rate * layer.dW / (np.sqrt(self.v_W[linear_idx]) + self.epsilon)
+                layer.b -= self.learning_rate * layer.db / (np.sqrt(self.v_b[linear_idx]) + self.epsilon)
+                linear_idx += 1
+                
+            elif hasattr(layer, 'gamma') and hasattr(layer, 'dgamma'):
+                if bn_idx >= len(self.v_gamma):
+                    self.v_gamma.append(np.zeros_like(layer.gamma))
+                    self.v_beta_bn.append(np.zeros_like(layer.beta))
+
+                self.v_gamma[bn_idx] = self.beta * self.v_gamma[bn_idx] + (1 - self.beta) * layer.dgamma ** 2
+                self.v_beta_bn[bn_idx] = self.beta * self.v_beta_bn[bn_idx] + (1 - self.beta) * layer.dbeta ** 2
+
+                layer.gamma -= self.learning_rate * layer.dgamma / (np.sqrt(self.v_gamma[bn_idx]) + self.epsilon)
+                layer.beta -= self.learning_rate * layer.dbeta / (np.sqrt(self.v_beta_bn[bn_idx]) + self.epsilon)
+                bn_idx += 1
